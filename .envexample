@@ -1,0 +1,8 @@
+# OpenEnv Configuration
+# Defines default ports and parameters for the API server deployment.
+
+HOST=0.0.0.0
+PORT=8000
+
+# To control random seed explicitly across the whole container:
+# ENVIRONMENT_SEED=42
