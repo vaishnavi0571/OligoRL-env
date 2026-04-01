@@ -4,6 +4,7 @@ emoji: 🤖
 colorFrom: blue
 colorTo: purple
 sdk: docker
+app_port: 7860
 pinned: false
 license: mit
 ---
@@ -81,11 +82,11 @@ The suite guarantees strict mathematical alignment using an automated testing fr
 2. Run the unit test verifications locally:
    `python test_api.py` (and adjacent test files)
 3. Launch the API:
-   `uvicorn api:app --host 0.0.0.0 --port 8000`
+   `uvicorn api:app --host 0.0.0.0 --port 7860`
 
 ### Docker Deployment
 
 1. Build the lightweight image:
    `docker build -t openenv .`
 2. Run the container:
-   `docker run -p 8000:8000 openenv`
+   `docker run -p 7860:7860 openenv`

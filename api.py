@@ -110,6 +110,12 @@ class StateResponse(BaseModel):
 # API Endpoints
 # -----------------------------------------------------------------
 
+@app.get("/")
+def health_check():
+    """Root endpoint for health checks (e.g. Hugging Face Spaces)"""
+    return {"status": "ok", "message": "OpenEnv API is running and healthy"}
+
+
 @app.post("/reset", response_model=ObservationSchema)
 def reset_env(req: ResetRequest):
     """Re-initialize the simulator environment."""
