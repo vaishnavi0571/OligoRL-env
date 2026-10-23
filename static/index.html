@@ -16,7 +16,11 @@
         <p class="subtitle">Run a firm. Compete with 4 rivals for customers and workers.</p>
       </div>
     </div>
-    <div class="topbar-controls">
+    <nav class="tabs" role="tablist" aria-label="View">
+      <button class="tab" role="tab" id="tab-play" aria-selected="true" aria-controls="view-play">Play</button>
+      <button class="tab" role="tab" id="tab-watch" aria-selected="false" aria-controls="view-watch">Watch agents</button>
+    </nav>
+    <div class="topbar-controls" id="play-controls">
       <label class="field-inline">Difficulty
         <select id="difficulty"></select>
       </label>
@@ -24,13 +28,13 @@
         <input id="seed" type="number" value="42" min="0" step="1">
       </label>
       <button id="btn-reset" class="btn">New game</button>
-      <button id="btn-theme" class="btn btn-ghost" aria-label="Toggle dark mode" title="Toggle theme">◐</button>
     </div>
+    <button id="btn-theme" class="btn btn-ghost" aria-label="Toggle dark mode" title="Toggle theme">◐</button>
   </header>
 
   <div class="progress" aria-hidden="true"><div id="progress-bar"></div></div>
 
-  <main class="layout">
+  <main class="layout" id="view-play" role="tabpanel" aria-labelledby="tab-play">
     <!-- ===== Controls ===== -->
     <aside class="card controls">
       <div class="card-head">
@@ -135,6 +139,98 @@
           </table>
         </div>
       </details>
+    </section>
+  </main>
+
+  <!-- ===== Watch agents ===== -->
+  <main class="watch" id="view-watch" role="tabpanel" aria-labelledby="tab-watch" hidden>
+    <div class="filters">
+      <label class="field-inline">Difficulty
+        <select id="w-difficulty"></select>
+      </label>
+      <label class="field-inline">Episodes per agent
+        <select id="w-seeds">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="50">50</option>
+        </select>
+      </label>
+      <span class="caption" id="w-status"></span>
+    </div>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>Leaderboard</h2>
+          <p class="caption">Every agent plays the same seeds. Ranked by final net worth (cash + capital, −$10k if bankrupt) with a 95% confidence interval. Training reward shown for comparison.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="board" id="board">
+          <thead><tr>
+            <th>#</th><th>Agent</th><th class="col-worth">Net worth</th>
+            <th>Bankrupt</th><th>Training reward</th><th>Workers at end</th><th></th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <figure class="card chart-card">
+      <figcaption><h2>Net worth over one episode (seed 0)</h2><div class="legend" id="legend-worth"></div></figcaption>
+      <div class="chart-box tall"><canvas id="c-worth" aria-label="Line chart of each agent's net worth over one episode"></canvas></div>
+    </figure>
+
+    <section class="card replay" id="replay">
+      <div class="card-head replay-head">
+        <div>
+          <h2>Replay</h2>
+          <p class="caption">Watch one agent play. It controls the firm shown as “You”.</p>
+        </div>
+        <div class="replay-controls">
+          <label class="field-inline">Agent <select id="r-agent"></select></label>
+          <label class="field-inline">Seed <input id="r-seed" type="number" value="0" min="0" step="1"></label>
+          <label class="field-inline">Speed
+            <select id="r-speed">
+              <option value="600">Slow</option>
+              <option value="250" selected>Normal</option>
+              <option value="80">Fast</option>
+            </select>
+          </label>
+          <button id="r-play" class="btn btn-primary">Play</button>
+        </div>
+      </div>
+      <div class="scrub">
+        <input id="r-step" type="range" min="0" max="30" value="0" aria-label="Replay step">
+        <span class="pill" id="r-step-label">Step 0 / 30</span>
+      </div>
+
+      <div class="tiles tiles-5">
+        <div class="tile"><span class="tile-label">Cash</span><span class="tile-value" id="r-cash">–</span></div>
+        <div class="tile"><span class="tile-label">Workers</span><span class="tile-value" id="r-workers">–</span></div>
+        <div class="tile"><span class="tile-label">Price</span><span class="tile-value" id="r-price">–</span></div>
+        <div class="tile"><span class="tile-label">Wage</span><span class="tile-value" id="r-wage">–</span></div>
+        <div class="tile"><span class="tile-label">Step reward</span><span class="tile-value" id="r-reward">–</span></div>
+      </div>
+
+      <div class="replay-grid">
+        <figure class="chart-card flat">
+          <figcaption><h2>Cash by firm</h2><div class="legend" id="legend-replay"></div></figcaption>
+          <div class="chart-box"><canvas id="c-replay" aria-label="Line chart of cash by firm during the replay"></canvas></div>
+        </figure>
+        <div class="replay-side">
+          <h3>Agent's move</h3>
+          <p id="r-action" class="r-action">–</p>
+          <h3>Commentary</h3>
+          <div id="r-feed" class="r-feed"><p class="caption">Press Play.</p></div>
+        </div>
+      </div>
+
+      <div class="labor flat">
+        <div class="card-head"><h2>Labor market</h2><span class="caption" id="r-labor-caption"></span></div>
+        <div class="firms" id="r-firms"></div>
+        <ul class="flows" id="r-flows" aria-live="off"></ul>
+      </div>
     </section>
   </main>
 

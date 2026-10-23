@@ -76,6 +76,8 @@ function applyTheme(theme) {
   Object.values(state.charts).forEach(restyleChart);
   renderLegends();
   if (state.history.length) { renderLabor(); rebuildCharts(); }
+  if (watch.rows) renderLeaderboard();
+  if (watch.frames) renderReplayFrame();
 }
 $("btn-theme").addEventListener("click", () => {
   const dark = document.documentElement.dataset.theme
@@ -212,6 +214,8 @@ function renderLegends() {
   fill("legend-cash", state.charts.cash);
   fill("legend-price", state.charts.price);
   fill("legend-wage", state.charts.wage);
+  fill("legend-worth", state.charts.worth);
+  fill("legend-replay", state.charts.replay);
 }
 
 function rivalsAvgPrice(obs) {
@@ -407,10 +411,14 @@ function renderBreakdown() {
   }
 }
 
-function renderLabor() {
-  const cur = last();
-  const o = cur.obs, d = cur.details;
-  const box = $("firms");
+const PLAY_LABOR = { firms: "firms", flows: "flows", caption: "labor-caption" };
+const REPLAY_LABOR = { firms: "r-firms", flows: "r-flows", caption: "r-labor-caption" };
+
+function renderLabor() { renderLaborInto(last(), PLAY_LABOR); }
+
+function renderLaborInto(entry, ids) {
+  const o = entry.obs, d = entry.details;
+  const box = $(ids.firms);
   box.replaceChildren();
   const n = state.meta.num_firms;
   for (let i = 0; i <= n; i++) {
@@ -452,10 +460,10 @@ function renderLabor() {
     box.append(card);
   }
 
-  $("labor-caption").textContent =
+  $(ids.caption).textContent =
     `${o.labor_force} workers · ${o.unemployed} unemployed · market wage ${money(o.market_wage)}`;
 
-  const flows = $("flows");
+  const flows = $(ids.flows);
   flows.replaceChildren();
   if (!d || !d.labor_flows.length) {
     flows.append(el("li", "", d ? "No workers moved this step." : "Worker moves will appear here."));
@@ -471,22 +479,35 @@ function renderLabor() {
   });
 }
 
+// Split the simulator's "a | b | c" feedback into headline / assessment / causes
+function parseFeedback(feedback) {
+  const parts = feedback.split(" | ");
+  const score = parts.find((p) => p.includes("(R=")) || "";
+  const because = parts.find((p) => p.startsWith("Because: "));
+  const isStatus = (p) => p.startsWith(">>>") || p.startsWith("WARNING");
+  const isFinancial = (p) => /^(Rev|Costs|Net|Cash) /.test(p) || p.startsWith("[Step");
+  return {
+    head: [score, ...parts.filter(isStatus).map((p) => p.replace(">>> ", ""))].filter(Boolean).join(" · "),
+    assess: parts.filter((p) => !isFinancial(p) && !isStatus(p) && p !== score && p !== because).join(" · "),
+    because,
+    alert: /BANKRUPT|CRITICAL|WARNING/.test(feedback),
+  };
+}
+
+function feedbackBody(feedback) {
+  const f = parseFeedback(feedback);
+  const body = el("div");
+  body.append(el("div", "f-head", f.head), el("div", "f-why", f.assess));
+  if (f.because) body.append(el("div", "f-why", f.because));
+  return { body, alert: f.alert };
+}
+
 function renderFeedItem(entry) {
   const r = entry.reward;
   if (!r) return;
-  const parts = r.feedback.split(" | ");
-  const score = parts.find((p) => p.includes("(R=")) || "";
-  const because = parts.find((p) => p.startsWith("Because: "));
-  const status = parts.filter((p) => p.startsWith(">>>") || p.startsWith("WARNING")).map((p) => p.replace(">>> ", ""));
-  const isFinancial = (p) => /^(Rev|Costs|Net|Cash) /.test(p) || p.startsWith("[Step");
-  const assess = parts.filter((p) => !isFinancial(p) && p !== score && p !== because && !status.includes(p.replace(">>> ", "")));
-  const li = el("li", /BANKRUPT|CRITICAL|WARNING/.test(r.feedback) ? "alert" : "");
-  li.append(el("span", "f-step", `Step ${entry.obs.step}`));
-  const body = el("div");
-  body.append(el("div", "f-head", [score, ...status].filter(Boolean).join(" · ")));
-  body.append(el("div", "f-why", assess.join(" · ")));
-  if (because) body.append(el("div", "f-why", because));
-  li.append(body);
+  const { body, alert } = feedbackBody(r.feedback);
+  const li = el("li", alert ? "alert" : "");
+  li.append(el("span", "f-step", `Step ${entry.obs.step}`), body);
   $("feed").prepend(li);
 }
 
@@ -601,13 +622,276 @@ $("btn-close").addEventListener("click", () => { $("modal").hidden = true; });
 $("difficulty").addEventListener("change", resetGame);
 
 document.addEventListener("keydown", (e) => {
-  if (e.code !== "Space" || e.repeat) return;
+  if (e.code !== "Space" || e.repeat || $("view-play").hidden) return;
   const t = e.target;
   if (t.tagName === "BUTTON" || t.tagName === "SELECT" || (t.tagName === "INPUT" && t.type !== "range")) return;
   if (!$("modal").hidden) return;
   e.preventDefault();
   runSteps(1);
 });
+
+// ---------------------------------------------------------------- watch tab
+const watch = {
+  agents: [],        // [{name, label, description}] in fixed order (colors follow it)
+  colorIndex: {},
+  rows: null,        // leaderboard rows, ranked
+  frames: null,      // replay frames [{obs, reward, details, action}]
+  idx: 0,
+  timer: null,
+  ready: false,
+};
+
+const agentColorKey = (name) => `--agent-${watch.colorIndex[name] ?? 0}`;
+const agentLabel = (name) => (watch.agents.find((a) => a.name === name) || { label: name }).label;
+
+function showTab(name) {
+  const play = name === "play";
+  $("tab-play").setAttribute("aria-selected", String(play));
+  $("tab-watch").setAttribute("aria-selected", String(!play));
+  $("view-play").hidden = !play;
+  $("view-watch").hidden = play;
+  $("play-controls").hidden = !play;
+  document.querySelector(".progress").style.visibility = play ? "visible" : "hidden";
+  Object.values(state.charts).forEach((c) => c.resize());
+  if (play) pauseReplay();
+  else if (!watch.ready) return initWatch();
+  return Promise.resolve();
+}
+$("tab-play").addEventListener("click", () => showTab("play"));
+$("tab-watch").addEventListener("click", () => showTab("watch"));
+
+async function initWatch() {
+  watch.ready = true;
+  try {
+    watch.agents = await api("/agents");
+  } catch (e) {
+    watch.ready = false;
+    toast(`Could not load agents: ${e.message}`);
+    return;
+  }
+  watch.agents.forEach((a, i) => { watch.colorIndex[a.name] = i; });
+
+  const diff = $("w-difficulty");
+  Object.entries(state.meta.presets).forEach(([name, p]) => {
+    const opt = el("option", "", `${name[0].toUpperCase()}${name.slice(1)} · ${p.episode_length} steps`);
+    opt.value = name;
+    diff.append(opt);
+  });
+  diff.value = "medium";
+  const sel = $("r-agent");
+  watch.agents.forEach((a) => {
+    const opt = el("option", "", a.label);
+    opt.value = a.name;
+    sel.append(opt);
+  });
+
+  state.charts.worth = makeChart("c-worth",
+    watch.agents.map((a) => ({ label: a.label, colorKey: agentColorKey(a.name) })), compact);
+  state.charts.replay = makeChart("c-replay",
+    state.meta.firm_names.map((n, i) => ({ label: n, colorKey: `--firm-${i}` })), compact);
+  renderLegends();
+  await Promise.all([loadLeaderboard(), loadReplay()]);
+}
+
+async function loadLeaderboard() {
+  const board = $("board");
+  board.classList.add("loading");
+  $("w-status").textContent = "Running episodes…";
+  const t0 = performance.now();
+  try {
+    const res = await api("/compare", {
+      method: "POST",
+      body: JSON.stringify({ difficulty: $("w-difficulty").value, seeds: +$("w-seeds").value }),
+    });
+    watch.rows = res.rows;
+    renderLeaderboard();
+    renderWorthChart();
+    $("w-status").textContent =
+      `${res.rows.length} agents × ${res.seeds} episodes · ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+  } catch (e) {
+    $("w-status").textContent = "";
+    toast(`Leaderboard failed: ${e.message}`);
+  } finally {
+    board.classList.remove("loading");
+  }
+}
+
+function renderLeaderboard() {
+  const rows = watch.rows;
+  const lo = Math.min(0, ...rows.map((r) => r.net_worth - r.net_worth_ci));
+  const hi = Math.max(0, ...rows.map((r) => r.net_worth + r.net_worth_ci));
+  const pos = (v) => ((v - lo) / (hi - lo || 1)) * 100;
+  const body = $("board").tBodies[0];
+  body.replaceChildren();
+  rows.forEach((r, rank) => {
+    const tr = el("tr");
+    tr.append(el("td", "", String(rank + 1)));
+
+    const agentTd = el("td");
+    const cell = el("div", "agent-cell");
+    const dot = el("i");
+    dot.style.background = css(agentColorKey(r.agent));
+    const text = el("div");
+    text.append(el("div", "agent-name", r.label), el("div", "agent-desc", r.description));
+    cell.append(dot, text);
+    agentTd.append(cell);
+    tr.append(agentTd);
+
+    const worthTd = el("td");
+    const wc = el("div", "worth-cell");
+    const track = el("div", "worth-track");
+    const zero = el("span", "zero");
+    zero.style.left = `${pos(0)}%`;
+    const bar = el("span", "bar " + (r.net_worth >= 0 ? "pos" : "neg"));
+    bar.style.left = `${Math.min(pos(0), pos(r.net_worth))}%`;
+    bar.style.width = `${Math.abs(pos(r.net_worth) - pos(0))}%`;
+    const ci = el("span", "ci");
+    ci.style.left = `${pos(r.net_worth - r.net_worth_ci)}%`;
+    ci.style.width = `${pos(r.net_worth + r.net_worth_ci) - pos(r.net_worth - r.net_worth_ci)}%`;
+    track.append(bar, zero, ci);
+    const val = el("div", "worth-val", money(r.net_worth));
+    val.append(el("small", "", `± ${money(r.net_worth_ci)}`));
+    wc.append(track, val);
+    worthTd.append(wc);
+    tr.append(worthTd);
+
+    tr.append(el("td", "", pct(r.bankrupt_rate)));
+    tr.append(el("td", "", `${r.total_reward.toFixed(2)} ± ${r.total_reward_ci.toFixed(2)}`));
+    tr.append(el("td", "", r.end_workers.toFixed(1)));
+    const btnTd = el("td");
+    const btn = el("button", "btn", "Replay");
+    btn.setAttribute("aria-label", `Replay ${r.label}`);
+    btn.addEventListener("click", async () => {
+      $("r-agent").value = r.agent;
+      await loadReplay();
+      $("replay").scrollIntoView({ behavior: "smooth", block: "start" });
+      playReplay();
+    });
+    btnTd.append(btn);
+    tr.append(btnTd);
+    body.append(tr);
+  });
+}
+
+function renderWorthChart() {
+  const chart = state.charts.worth;
+  const byName = Object.fromEntries(watch.rows.map((r) => [r.agent, r]));
+  const longest = Math.max(...watch.rows.map((r) => r.worth_curve_seed0.length));
+  chart.data.labels = Array.from({ length: longest }, (_, i) => i);
+  chart.data.datasets.forEach((ds, i) => {
+    const row = byName[watch.agents[i].name];
+    ds.data = row ? row.worth_curve_seed0 : [];
+    ds.hidden = !row;
+  });
+  chart.update("none");
+}
+
+function describeAction(a) {
+  if (!a) return "Start of episode";
+  const parts = [`Price ${money2(a.set_price)}`];
+  if (a.set_wage !== undefined && a.set_wage !== null) parts.push(`wage target ${money(a.set_wage)}`);
+  if (a.hire_workers) parts.push(a.hire_workers > 0 ? `hire ${a.hire_workers}` : `fire ${-a.hire_workers}`);
+  if (a.capex) parts.push(`invest ${money(a.capex)}`);
+  if (a.lobby_tax_change) parts.push(`lobby ${(a.lobby_tax_change * 100).toFixed(0)} pts`);
+  return parts.join(" · ");
+}
+
+async function loadReplay() {
+  pauseReplay();
+  const seed = parseInt($("r-seed").value, 10);
+  try {
+    const res = await api("/simulate", {
+      method: "POST",
+      body: JSON.stringify({
+        agent: $("r-agent").value,
+        difficulty: $("w-difficulty").value,
+        seed: Number.isFinite(seed) && seed >= 0 ? seed : 0,
+      }),
+    });
+    watch.frames = res.frames.map((f) => ({
+      obs: f.observation, reward: f.reward, details: f.details, action: f.action,
+    }));
+    watch.bankrupt = res.bankrupt;
+    watch.idx = 0;
+    $("r-step").max = watch.frames.length - 1;
+    // Fix the y-range to the whole episode so the axis doesn't jump while playing
+    const cash = watch.frames.flatMap((f) => f.obs.agent_wealth.slice(0, state.meta.num_firms));
+    const y = state.charts.replay.options.scales.y;
+    y.suggestedMin = Math.min(...cash);
+    y.suggestedMax = Math.max(...cash);
+    watch.yRange = [y.suggestedMin, y.suggestedMax];
+    renderReplayFrame();
+  } catch (e) {
+    toast(`Replay failed: ${e.message}`);
+  }
+}
+
+function renderReplayFrame() {
+  const f = watch.frames[watch.idx];
+  const o = f.obs;
+  const isLast = watch.idx === watch.frames.length - 1;
+  $("r-cash").textContent = money(o.firm_cash);
+  $("r-workers").textContent = o.worker_count;
+  $("r-price").textContent = money2(o.current_price);
+  $("r-wage").textContent = money(o.wage);
+  $("r-reward").textContent = f.reward ? f.reward.composite.toFixed(3) : "–";
+  $("r-step").value = watch.idx;
+  $("r-step-label").textContent =
+    `Step ${o.step} / ${o.episode_length}` + (isLast && watch.bankrupt ? " · bankrupt" : "");
+  $("r-action").textContent = describeAction(f.action);
+
+  const feed = $("r-feed");
+  feed.replaceChildren();
+  if (f.reward) {
+    const { body, alert } = feedbackBody(f.reward.feedback);
+    feed.className = "r-feed" + (alert ? " alert" : "");
+    feed.append(body);
+  } else {
+    feed.className = "r-feed";
+    feed.append(el("p", "caption", `${agentLabel($("r-agent").value)} takes over the firm. Press Play.`));
+  }
+  renderLaborInto(f, REPLAY_LABOR);
+
+  const chart = state.charts.replay;
+  const shown = watch.frames.slice(0, watch.idx + 1);
+  chart.data.labels = shown.map((x) => x.obs.step);
+  chart.data.datasets.forEach((ds, i) => { ds.data = shown.map((x) => x.obs.agent_wealth[i]); });
+  if (watch.yRange) {
+    chart.options.scales.y.suggestedMin = watch.yRange[0];
+    chart.options.scales.y.suggestedMax = watch.yRange[1];
+  }
+  chart.update("none");
+}
+
+function playReplay() {
+  if (!watch.frames) return;
+  pauseReplay();
+  if (watch.idx >= watch.frames.length - 1) watch.idx = 0;
+  $("r-play").textContent = "Pause";
+  watch.timer = setInterval(() => {
+    if (watch.idx >= watch.frames.length - 1) { pauseReplay(); return; }
+    watch.idx += 1;
+    renderReplayFrame();
+  }, +$("r-speed").value);
+}
+
+function pauseReplay() {
+  clearInterval(watch.timer);
+  watch.timer = null;
+  $("r-play").textContent = "Play";
+}
+
+$("r-play").addEventListener("click", () => (watch.timer ? pauseReplay() : playReplay()));
+$("r-step").addEventListener("input", () => {
+  pauseReplay();
+  watch.idx = +$("r-step").value;
+  renderReplayFrame();
+});
+$("r-speed").addEventListener("change", () => { if (watch.timer) playReplay(); });
+$("r-agent").addEventListener("change", loadReplay);
+$("r-seed").addEventListener("change", loadReplay);
+$("w-difficulty").addEventListener("change", () => { loadLeaderboard(); loadReplay(); });
+$("w-seeds").addEventListener("change", loadLeaderboard);
 
 // ---------------------------------------------------------------- boot
 async function boot() {
@@ -632,6 +916,15 @@ async function boot() {
   applyBounds();
   initCharts();
   await resetGame();
+  if (params.get("tab") === "watch") {
+    await showTab("watch");
+    const rstep = parseInt(params.get("rstep"), 10);
+    if (rstep > 0 && watch.frames) {
+      watch.idx = Math.min(rstep, watch.frames.length - 1);
+      renderReplayFrame();
+    }
+    return;
+  }
   const autoSteps = parseInt(params.get("steps"), 10);
   if (autoSteps > 0) {
     inputs.wage.value = params.get("wage") || inputs.wage.value;

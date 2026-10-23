@@ -10,8 +10,9 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from simulator import EconSimulator
+from simulator import EconSimulator, StepInfo
 from reward_integrator import compute_step_reward
+from agents import AGENTS, leaderboard, terminal_net_worth
 from config import (
     PRICE_FLOOR,
     MAX_HIRE_PER_STEP,
@@ -184,6 +185,56 @@ class StepResponse(BaseModel):
     step: int
     episode_length: int
 
+class CompareRequest(BaseModel):
+    agents: Optional[List[str]] = Field(None, description="Agent names (default: all)")
+    difficulty: str = Field("medium", description="Presets: 'easy', 'medium', 'hard'")
+    seeds: int = Field(20, ge=1, le=100, description="Episodes per agent (seeds 0..N-1)")
+
+
+class SimulateRequest(BaseModel):
+    agent: str = Field(..., description="Agent name, see GET /agents")
+    difficulty: str = Field("medium", description="Presets: 'easy', 'medium', 'hard'")
+    seed: int = Field(0, ge=0, description="Random seed for the episode")
+
+
+def build_details(info: StepInfo) -> StepDetails:
+    """Dashboard breakdown of one simulator step."""
+    total_rev = info.total_revenue_all
+    return StepDetails(
+        revenue=info.revenue,
+        labor_cost=info.labor_cost,
+        input_cost=info.input_cost,
+        hiring_cost=info.hiring_cost,
+        capex_spent=info.capex_spent,
+        tax_paid=info.tax_paid,
+        total_expenses=info.total_expenses,
+        net_cash_flow=info.net_cash_flow,
+        units_sold=info.units_sold,
+        max_output=info.max_output,
+        demand=info.demand,
+        spill_units=info.spill_units,
+        market_share=info.revenue / total_rev if total_rev > 0 else 0.0,
+        competitor_avg_price=info.competitor_avg_price,
+        market_avg_price=info.market_avg_price,
+        real_gdp=info.real_gdp_current,
+        hires_requested=info.hires_requested,
+        hires_filled=info.hires_filled,
+        poached_in=info.poached_in,
+        poached_out=info.poached_out,
+        fired=info.fired,
+        quits=info.quits,
+        firm_quits=info.firm_quits,
+        firm_poached_out=info.firm_poached_out,
+        firm_hires=info.firm_hires,
+        labor_flows=info.labor_flows,
+    )
+
+
+def check_difficulty(difficulty: str) -> None:
+    if difficulty not in PRESETS:
+        raise HTTPException(status_code=422, detail=f"Unknown difficulty '{difficulty}'")
+
+
 class StateResponse(BaseModel):
     observation: ObservationSchema
     step: int
@@ -315,41 +366,11 @@ def step_env(
                 f"Reward: {reward_res.composite:.3f} | Net Flow: ${info.net_cash_flow:,.0f}"
             )
             
-            total_rev = info.total_revenue_all
-            details = StepDetails(
-                revenue=info.revenue,
-                labor_cost=info.labor_cost,
-                input_cost=info.input_cost,
-                hiring_cost=info.hiring_cost,
-                capex_spent=info.capex_spent,
-                tax_paid=info.tax_paid,
-                total_expenses=info.total_expenses,
-                net_cash_flow=info.net_cash_flow,
-                units_sold=info.units_sold,
-                max_output=info.max_output,
-                demand=info.demand,
-                spill_units=info.spill_units,
-                market_share=info.revenue / total_rev if total_rev > 0 else 0.0,
-                competitor_avg_price=info.competitor_avg_price,
-                market_avg_price=info.market_avg_price,
-                real_gdp=info.real_gdp_current,
-                hires_requested=info.hires_requested,
-                hires_filled=info.hires_filled,
-                poached_in=info.poached_in,
-                poached_out=info.poached_out,
-                fired=info.fired,
-                quits=info.quits,
-                firm_quits=info.firm_quits,
-                firm_poached_out=info.firm_poached_out,
-                firm_hires=info.firm_hires,
-                labor_flows=info.labor_flows,
-            )
-
             return StepResponse(
                 observation=obs,
                 # Convert the dataclass to a dict for Pydantic serialization
                 reward=RewardSchema(**reward_res.__dict__),
-                details=details,
+                details=build_details(info),
                 terminated=sim.terminated,
                 truncated=sim.truncated,
                 step=sim.step_count,
@@ -363,3 +384,75 @@ def step_env(
         except Exception as e:
             logger.error(f"[ERROR] Step failed: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
+
+
+# -----------------------------------------------------------------
+# Agents: leaderboard and replays (independent of player sessions)
+# -----------------------------------------------------------------
+
+@app.get("/agents")
+def list_agents():
+    """Built-in agents that can be compared or replayed."""
+    return [
+        {"name": cls.name, "label": cls.label, "description": cls.description}
+        for cls in AGENTS.values()
+    ]
+
+
+@app.post("/compare")
+def compare_agents(req: CompareRequest):
+    """Leaderboard: every agent plays the same seeds; ranked by mean
+    terminal net worth with a 95% confidence interval.  Cached."""
+    check_difficulty(req.difficulty)
+    names = req.agents or list(AGENTS)
+    unknown = [n for n in names if n not in AGENTS]
+    if unknown:
+        raise HTTPException(status_code=422, detail=f"Unknown agents: {unknown}")
+    return {
+        "difficulty": req.difficulty,
+        "seeds": req.seeds,
+        "rows": leaderboard(names, req.difficulty, req.seeds),
+    }
+
+
+@app.post("/simulate")
+def simulate_agent(req: SimulateRequest):
+    """Full replay of one agent's episode: one frame per step."""
+    check_difficulty(req.difficulty)
+    if req.agent not in AGENTS:
+        raise HTTPException(status_code=422, detail=f"Unknown agent '{req.agent}'")
+    agent = AGENTS[req.agent]()
+    sim = EconSimulator(difficulty=req.difficulty, seed=req.seed)
+    obs = sim.reset()
+    agent.reset(req.seed)
+    frames = [{"observation": obs, "reward": None, "details": None, "action": None}]
+    while not (sim.terminated or sim.truncated):
+        action = agent.act(obs)
+        obs, info = sim.step(action)
+        reward = compute_step_reward(info, sim)
+        frames.append({
+            "observation": obs,
+            "reward": reward.__dict__,
+            "details": build_details(info).model_dump(),
+            "action": action,
+        })
+    return {
+        "agent": req.agent,
+        "difficulty": req.difficulty,
+        "seed": req.seed,
+        "net_worth": terminal_net_worth(sim),
+        "bankrupt": sim.terminated,
+        "frames": frames,
+    }
+
+
+def _warm_leaderboards() -> None:
+    """Precompute default leaderboards so the Watch tab opens instantly."""
+    for difficulty in PRESETS:
+        leaderboard(None, difficulty, 20)
+    logger.info("[WARMUP] Leaderboards cached")
+
+
+@app.on_event("startup")
+def warm_cache() -> None:
+    threading.Thread(target=_warm_leaderboards, daemon=True).start()

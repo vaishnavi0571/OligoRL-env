@@ -2,14 +2,20 @@
 OpenEnv -- Agents and Leaderboard Scoring
 ==========================================
 Every agent maps an observation dict to an action dict.  Agents may keep
-state between steps; call reset() at the start of each episode.
+state between steps; call reset(seed) at the start of each episode.
 
 Leaderboards rank on terminal_net_worth(), NOT on the training reward.
+Every agent plays the same seeds (common random numbers), and results
+are reported as a mean with a 95% confidence interval.
 """
 
-from typing import Dict
+import random
+import statistics
+from functools import lru_cache
+from typing import Dict, List, Optional
 
 from simulator import EconSimulator, weighted_median
+from reward_integrator import compute_step_reward
 from config import (
     MIN_WAGE, MAX_WAGE, DEFAULT_PRICE, INPUT_COST_PER_UNIT,
     MAX_HIRE_PER_STEP, POACH_PREMIUM, BANKRUPTCY_PENALTY,
@@ -26,12 +32,22 @@ def terminal_net_worth(sim: EconSimulator) -> float:
 
 class Agent:
     name = "agent"
+    label = "Agent"
+    description = ""
 
-    def reset(self) -> None:
+    def reset(self, seed: int = 0) -> None:
         pass
 
     def act(self, obs: Dict) -> Dict:
         raise NotImplementedError
+
+
+def rivals_wage(obs: Dict) -> float:
+    """Headcount-weighted median wage of active rivals (excludes self)."""
+    return weighted_median([
+        (w, n) for w, n, a in zip(obs["firm_wages"][1:], obs["firm_workers"][1:],
+                                  obs["firm_active"][1:]) if a
+    ])
 
 
 # -----------------------------------------------------------------
@@ -49,6 +65,8 @@ class RuleBasedAgent(Agent):
             covers 4 steps of the larger payroll; fire 1 below 70% use.
     """
     name = "rule_based"
+    label = "Rule-based"
+    description = "Raises price and hires while demand outruns capacity; matches market wage"
 
     def act(self, obs: Dict) -> Dict:
         price = obs["current_price"]
@@ -88,14 +106,29 @@ class RuleBasedAgent(Agent):
 class HoldAgent(Agent):
     """Keeps every default: price $10, wage $500, no hiring."""
     name = "hold"
+    label = "Hold"
+    description = "Does nothing: default price, default wage, never hires"
 
     def act(self, obs: Dict) -> Dict:
         return {"set_price": DEFAULT_PRICE}
 
 
+class MarketPlusEpsAgent(Agent):
+    """Pays market + 1% and grows to 12 workers."""
+    name = "market+eps"
+    label = "Market + 1%"
+    description = "Pays 1% above market and grows to 12 workers"
+
+    def act(self, obs: Dict) -> Dict:
+        return {"set_price": DEFAULT_PRICE, "set_wage": obs["market_wage"] * 1.01,
+                "hire_workers": 2 if obs["worker_count"] < 12 else 0}
+
+
 class AlwaysFloorAgent(Agent):
     """Parasite: pays the minimum wage forever."""
     name = "always_floor"
+    label = "Minimum wage"
+    description = "Parasite probe: pays the legal minimum wage forever"
 
     def act(self, obs: Dict) -> Dict:
         return {"set_price": DEFAULT_PRICE, "set_wage": MIN_WAGE}
@@ -104,26 +137,11 @@ class AlwaysFloorAgent(Agent):
 class AlwaysMaxAgent(Agent):
     """Pays the maximum wage and keeps hiring."""
     name = "always_max"
+    label = "Maximum wage"
+    description = "Pays the maximum wage and hires every step"
 
     def act(self, obs: Dict) -> Dict:
         return {"set_price": DEFAULT_PRICE, "set_wage": MAX_WAGE, "hire_workers": 2}
-
-
-class MarketPlusEpsAgent(Agent):
-    """Pays market + 1% and grows to 12 workers."""
-    name = "market+eps"
-
-    def act(self, obs: Dict) -> Dict:
-        return {"set_price": DEFAULT_PRICE, "set_wage": obs["market_wage"] * 1.01,
-                "hire_workers": 2 if obs["worker_count"] < 12 else 0}
-
-
-def rivals_wage(obs: Dict) -> float:
-    """Headcount-weighted median wage of active rivals (excludes self)."""
-    return weighted_median([
-        (w, n) for w, n, a in zip(obs["firm_wages"][1:], obs["firm_workers"][1:],
-                                  obs["firm_active"][1:]) if a
-    ])
 
 
 class PoachToSpillAgent(Agent):
@@ -131,6 +149,8 @@ class PoachToSpillAgent(Agent):
     then serve the customers they turn away.  Bids against RIVALS' wages
     (bidding against the market median would chase its own wage)."""
     name = "poach_to_spill"
+    label = "Poacher"
+    description = "Exploit probe: outbids rivals by 15% to steal workers and their customers"
 
     def act(self, obs: Dict) -> Dict:
         return {"set_price": DEFAULT_PRICE, "set_wage": rivals_wage(obs) * 1.15,
@@ -141,35 +161,110 @@ class SpillParasiteAgent(Agent):
     """Exploit probe: price above rivals to keep idle capacity, and live
     off the customers that capacity-constrained rivals turn away."""
     name = "spill_parasite"
+    label = "Overflow parasite"
+    description = "Exploit probe: prices 10% high, keeps spare capacity for rivals' overflow"
 
     def act(self, obs: Dict) -> Dict:
         return {"set_price": 1.1 * DEFAULT_PRICE,
                 "hire_workers": 1 if obs["worker_count"] < 8 else 0}
 
 
+class RandomAgent(Agent):
+    """Uniformly random actions within sensible ranges (seeded per episode)."""
+    name = "random"
+    label = "Random"
+    description = "Random price, wage and hiring every step"
+
+    def __init__(self):
+        self.rng = random.Random(0)
+
+    def reset(self, seed: int = 0) -> None:
+        self.rng = random.Random(seed + 12345)
+
+    def act(self, obs: Dict) -> Dict:
+        return {"set_price": self.rng.uniform(7.0, 13.0),
+                "set_wage": self.rng.uniform(MIN_WAGE, 800.0),
+                "hire_workers": self.rng.randint(-2, 3)}
+
+
 AGENTS = {
     cls.name: cls for cls in (
-        RuleBasedAgent, HoldAgent, AlwaysFloorAgent, AlwaysMaxAgent,
-        MarketPlusEpsAgent, PoachToSpillAgent, SpillParasiteAgent,
+        RuleBasedAgent, HoldAgent, MarketPlusEpsAgent, AlwaysFloorAgent,
+        AlwaysMaxAgent, PoachToSpillAgent, SpillParasiteAgent, RandomAgent,
     )
 }
 
 
+# -----------------------------------------------------------------
+# Evaluation
+# -----------------------------------------------------------------
+
 def run_episode(agent: Agent, difficulty: str = "medium", seed: int = 0,
-                spillover_fraction=None) -> Dict:
-    """Play one full episode; returns summary stats."""
+                spillover_fraction=None, record: bool = False) -> Dict:
+    """Play one full episode; returns summary stats.
+
+    With record=True also returns the player's net worth after every step
+    (index 0 = start) under "worth_curve".
+    """
     sim = EconSimulator(difficulty=difficulty, seed=seed,
                         spillover_fraction=spillover_fraction)
     obs = sim.reset()
-    agent.reset()
+    agent.reset(seed)
+    total_reward = 0.0
+    curve = [terminal_net_worth(sim)]
     while not (sim.terminated or sim.truncated):
-        obs, _ = sim.step(agent.act(obs))
-    return {
+        obs, info = sim.step(agent.act(obs))
+        total_reward += compute_step_reward(info, sim).composite
+        if record:
+            curve.append(terminal_net_worth(sim))
+    result = {
         "net_worth": terminal_net_worth(sim),
         "bankrupt": sim.terminated,
         "steps": sim.step_count,
         "workers": sim.player.worker_count,
+        "total_reward": total_reward,
     }
+    if record:
+        result["worth_curve"] = curve
+    return result
+
+
+def _mean_ci(values: List[float]):
+    mean = statistics.mean(values)
+    ci = 1.96 * statistics.stdev(values) / len(values) ** 0.5 if len(values) > 1 else 0.0
+    return mean, ci
+
+
+@lru_cache(maxsize=64)
+def evaluate_agent(name: str, difficulty: str, num_seeds: int) -> Dict:
+    """Leaderboard row for one agent over seeds 0..num_seeds-1 (cached:
+    the simulator is deterministic per seed)."""
+    runs = [run_episode(AGENTS[name](), difficulty, seed, record=(seed == 0))
+            for seed in range(num_seeds)]
+    worth, worth_ci = _mean_ci([r["net_worth"] for r in runs])
+    reward, reward_ci = _mean_ci([r["total_reward"] for r in runs])
+    cls = AGENTS[name]
+    return {
+        "agent": name,
+        "label": cls.label,
+        "description": cls.description,
+        "net_worth": worth,
+        "net_worth_ci": worth_ci,
+        "bankrupt_rate": sum(r["bankrupt"] for r in runs) / len(runs),
+        "total_reward": reward,
+        "total_reward_ci": reward_ci,
+        "end_workers": statistics.mean(r["workers"] for r in runs),
+        "steps_survived": statistics.mean(r["steps"] for r in runs),
+        "worth_curve_seed0": runs[0]["worth_curve"],
+    }
+
+
+def leaderboard(names: Optional[List[str]] = None, difficulty: str = "medium",
+                num_seeds: int = 20) -> List[Dict]:
+    """Rows for the given agents, ranked by mean terminal net worth."""
+    names = names or list(AGENTS)
+    rows = [evaluate_agent(n, difficulty, num_seeds) for n in names]
+    return sorted(rows, key=lambda r: r["net_worth"], reverse=True)
 
 
 assert MAX_HIRE_PER_STEP >= 3  # PoachToSpillAgent hires 3 per step
