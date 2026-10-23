@@ -177,6 +177,11 @@ class DifficultyPreset:
         """Ideal runway in timestep units for this difficulty."""
         return RUNWAY_TARGET_RATIO * self.episode_length
 
+    @property
+    def wage_runway_target(self) -> float:
+        """Target steps of wages covered by cash (training solvency, 7c)."""
+        return WAGE_RUNWAY_TARGET_STEPS
+
     def weights_dict(self) -> Dict[str, float]:
         return {
             "profit":   self.w_profit,
@@ -250,7 +255,8 @@ WORKER_PRODUCTIVITY: float = 100.0
 """Units of output per worker per timestep."""
 
 WAGE_PER_WORKER: float = 500.0
-"""Labor cost per worker per timestep."""
+"""Default wage per worker per timestep.  Every firm starts at this wage;
+the player can change it with the set_wage action (see LABOR MARKET)."""
 
 INPUT_COST_PER_UNIT: float = 3.0
 """Variable cost per unit sold (materials, energy, etc.)."""
@@ -278,6 +284,16 @@ DEFAULT_PRICE: float = 10.0
 
 PRICE_FLOOR: float = 0.01
 """Minimum allowed price. Prevents division by zero in demand model."""
+
+# -- Demand spillover --
+SPILLOVER_FRACTION: float = 0.4
+"""Fraction of a capacity-constrained firm's unserved demand that spills
+to firms with spare capacity.  0.0 disables spillover (clean ablation:
+fixed per-firm demand).  Guards:
+  - spare capacity uses start-of-step headcount (one-step hiring lag),
+    so workers poached this step cannot serve spilled customers yet
+  - one simultaneous round, split proportional to spare capacity
+  - firms whose cash cannot cover this step's wage bill get no spillover"""
 
 # -- GDP-demand feedback --
 GDP_DEMAND_SENSITIVITY: float = 0.1
@@ -326,6 +342,124 @@ LOBBY_TAX_CHANGE_MAX: float = 0.10
 # -- Bankruptcy --
 BANKRUPTCY_THRESHOLD: float = 0.0
 """firm_cash at or below this after paying expenses triggers termination."""
+
+
+# ---------------------------------------------------------------------
+# 7b. LABOR MARKET
+# ---------------------------------------------------------------------
+# Workers are a finite pool shared by all firms.  Phase order each step:
+#   1. Post wages: player via set_wage (max +/-WAGE_MAX_CHANGE per step),
+#      NPCs via their reaction rule (based on LAST step's outcomes).
+#   2. market_wage = employment-weighted MEDIAN of posted wages.
+#   3. Quits: a firm paying below the median of the OTHER firms by more
+#      than QUIT_TOLERANCE loses workers to the unemployed pool:
+#        quit_rate = min(MAX_QUIT_RATE, QUIT_SENSITIVITY * (gap - tolerance))
+#   4. Hiring from the pool: unemployed workers have reservation wages
+#      spread uniformly over [RESERVATION_WAGE_LOW, RESERVATION_WAGE_HIGH]
+#      x market_wage (a labor supply curve).  When firms want more workers
+#      than are willing, each worker picks a firm by wage-weighted lottery.
+#      A firm that just lost quitters cannot rehire this step.
+#   5. Poaching: openings still unfilled pull employed workers from firms
+#      paying at least POACH_PREMIUM less (job-to-job moves).
+# If every firm pays the same wage, nobody moves (original behaviour).
+# All labor randomness uses a separate RNG, so the price/demand random
+# sequence is identical to the fixed-wage model for a given seed.
+
+LABOR_FORCE_TOTAL: int = 30
+"""Total workers in the economy (employed + unemployed).
+At start: NUM_AGENTS * INITIAL_WORKER_COUNT = 25 employed, 5 unemployed.
+The small pool means growing past ~10 workers requires poaching from NPCs."""
+
+MIN_WAGE: float = 300.0
+"""Legal minimum wage.  Lower bound of the set_wage action."""
+
+MAX_WAGE: float = 1000.0
+"""Upper bound of the set_wage action."""
+
+WAGE_MAX_CHANGE: float = 0.10
+"""Wages are sticky: the player's wage moves at most 10% per step.
+Blocks bait-and-switch (hire high, cut to the floor next step)."""
+
+QUIT_TOLERANCE: float = 0.03
+"""Workers ignore wage gaps up to 3% below the market.  Prevents
+permanent churn from tiny wage differences between firms."""
+
+QUIT_SENSITIVITY: float = 2.0
+"""How strongly workers react to being underpaid beyond the tolerance.
+Paying 13% below market -> 2 * (13% - 3%) = 20% of workers quit."""
+
+MAX_QUIT_RATE: float = 0.5
+"""At most this fraction of a firm's workers can quit in one step."""
+
+RESERVATION_WAGE_LOW: float = 0.85
+RESERVATION_WAGE_HIGH: float = 1.00
+"""Unemployed workers' reservation wages, as fractions of the market wage.
+A firm paying 0.85x market attracts nobody from the pool; at 0.90x a
+third of the pool is willing; at market wage everyone is."""
+
+HIRING_WAGE_ELASTICITY: float = 10.0
+"""When workers choose between firms, P(firm) ~ (wage / market)^k.
+Paying 5% more makes a firm ~1.6x as likely to be picked: higher pay
+wins MORE workers, not ALL of them (no +$1 knife-edge)."""
+
+POACH_PREMIUM: float = 0.05
+"""Employed workers switch firms only for at least a 5% raise."""
+
+MAX_POACH_RATE: float = 0.4
+"""At most this fraction of a firm's workers can be poached per step."""
+
+# NPC wage rule.  Each NPC draws its own parameters per episode from these
+# ranges, so NPCs are not identical and the rule is harder to exploit.
+NPC_WAGE_STEP_RANGE: tuple = (0.02, 0.04)
+"""Raise applied after losing workers or failing to fill openings."""
+
+NPC_WAGE_RELAX_RANGE: tuple = (0.005, 0.015)
+"""Cut applied (never below WAGE_PER_WORKER) after a calm streak."""
+
+NPC_RELAX_STEPS_RANGE: tuple = (2, 4)
+"""Calm steps (no losses, no unfilled openings) before relaxing."""
+
+NPC_MAX_WAGE_SHARE_RANGE: tuple = (0.85, 0.95)
+"""NPCs never pay more than this fraction of a worker's marginal revenue
+product: WORKER_PRODUCTIVITY * (price - INPUT_COST_PER_UNIT).
+At price $10 and share 0.9 this caps NPC wages at 0.9 * 100 * 7 = $630."""
+
+
+# ---------------------------------------------------------------------
+# 7c. TRAINING SOLVENCY: activity-gated wage runway
+# ---------------------------------------------------------------------
+# The original solvency score divides cash by net burn rate.  A profitable
+# firm has ~zero burn, so runway explodes and S(t) saturates: in practice
+# it only checks cash > 0, and a shell firm with no workers scores as
+# "safe".  The training reward instead uses:
+#   wage_runway = min(cash / wage_bill, CAP_MULT * target)   (steps)
+#   S_runway    = sigmoid(STEEPNESS * (wage_runway - target) / target)
+#   activity    = min(units_sold / ACTIVITY_REFERENCE_UNITS, 1)
+#   S(t)        = S_runway * activity          (multiplicative gate)
+# Units SOLD, not produced: hoarding idle workers earns no credit.
+# Leaderboards rank on terminal net worth, not on this reward.
+
+WAGE_RUNWAY_TARGET_STEPS: float = 2.0
+"""Target: cash covers 2 steps of payroll.  Same on every difficulty --
+runway is about surviving a bad step, not about episode length.
+Calibrated by sweep: a 6-step target punished hiring for ~20 steps
+(growing to 10 workers scored below holding at 5 despite +60% cash)."""
+
+WAGE_RUNWAY_CAP_MULT: float = 2.0
+"""Runway beyond 2x target (4 steps) earns nothing extra: solvency flags
+distress, it does not reward cash hoarding."""
+
+WAGE_RUNWAY_STEEPNESS: float = 3.0
+"""Sigmoid steepness in units of target.  S_runway = 0.05 at zero runway,
+0.5 at target, 0.95 at the cap -- the same shape on every difficulty."""
+
+ACTIVITY_REFERENCE_UNITS: float = INITIAL_WORKER_COUNT * WORKER_PRODUCTIVITY
+"""Units sold that earn full solvency credit (the starting firm's output)."""
+
+# -- Leaderboard (evaluation, not training) --
+BANKRUPTCY_PENALTY: float = INITIAL_FIRM_CASH
+"""Terminal net worth of a bankrupt firm = final cash - this penalty.
+Stops 'die early' from beating 'bleed slowly' on the leaderboard."""
 
 
 # ---------------------------------------------------------------------

@@ -12,9 +12,9 @@ something economically absurd, you have a bug.
 from dataclasses import dataclass
 
 from rewards import (
-    profit_score, solvency_score, gdp_score,
+    profit_score, gdp_score,
     gini_with_penalty,
-    compute_burn_rate, compute_runway,
+    wage_runway_score, activity_factor,
 )
 from simulator import EconSimulator, StepInfo
 from config import INITIAL_FIRM_CASH
@@ -30,7 +30,8 @@ class RewardResult:
     composite: float         # weighted sum
     feedback: str            # human-readable explanation
     gini_coefficient: float  # raw Gini before penalty
-    runway_steps: float      # firm cash / burn rate
+    runway_steps: float      # steps of wages covered by cash (capped)
+    activity: float          # units sold / baseline output, in [0, 1]
 
 
 def compute_step_reward(info: StepInfo, sim: EconSimulator) -> RewardResult:
@@ -52,13 +53,14 @@ def compute_step_reward(info: StepInfo, sim: EconSimulator) -> RewardResult:
         baseline_revenue=INITIAL_FIRM_CASH / 2.0,
     )
 
-    # --- 2. Solvency score ---
-    s = solvency_score(
+    # --- 2. Solvency score: wage runway x activity gate (config 7c) ---
+    s_runway, runway = wage_runway_score(
         firm_cash=sim.player.cash,
-        total_expenses=info.total_expenses,
-        revenue=info.revenue,
-        ideal_runway=preset.ideal_runway,
+        wage_bill=info.labor_cost,
+        target=preset.wage_runway_target,
     )
+    activity = activity_factor(info.units_sold)
+    s = s_runway * activity
 
     # --- 3. GDP score ---
     g = gdp_score(
@@ -78,13 +80,9 @@ def compute_step_reward(info: StepInfo, sim: EconSimulator) -> RewardResult:
         - abs(w["gini"]) * gp
     )
 
-    # --- Centralized burn_rate / runway (single source of truth) ---
-    burn_rate = compute_burn_rate(info.total_expenses, info.revenue)
-    runway = compute_runway(sim.player.cash, burn_rate)
-
     # --- Generate semantic feedback ---
     feedback = _generate_feedback(
-        p, s, g, gp, composite, gini_coeff, runway, info, sim,
+        p, s, g, gp, composite, gini_coeff, runway, activity, info, sim,
     )
 
     return RewardResult(
@@ -96,6 +94,7 @@ def compute_step_reward(info: StepInfo, sim: EconSimulator) -> RewardResult:
         feedback=feedback,
         gini_coefficient=gini_coeff,
         runway_steps=runway,
+        activity=activity,
     )
 
 
@@ -105,7 +104,7 @@ def compute_step_reward(info: StepInfo, sim: EconSimulator) -> RewardResult:
 
 def _generate_feedback(
     p: float, s: float, g: float, gp: float, composite: float,
-    gini_coeff: float, runway: float,
+    gini_coeff: float, runway: float, activity: float,
     info: StepInfo, sim: EconSimulator,
 ) -> str:
     """Build a human-readable feedback string with causal reasoning.
@@ -142,14 +141,16 @@ def _generate_feedback(
     else:
         profit_msg = "SEVERE LOSSES"
 
-    if s > 0.9:
-        solv_msg = f"cash strong ({runway:.0f} steps runway)"
+    if activity < 0.5:
+        solv_msg = f"BARELY OPERATING (selling {activity:.0%} of baseline output)"
+    elif s > 0.9:
+        solv_msg = f"cash strong (covers {runway:.0f} steps of wages)"
     elif s > 0.5:
-        solv_msg = f"cash adequate ({runway:.0f} steps runway)"
+        solv_msg = f"cash adequate (covers {runway:.0f} steps of wages)"
     elif s > 0.2:
-        solv_msg = f"cash tight ({runway:.1f} steps runway)"
+        solv_msg = f"cash tight (covers {runway:.1f} steps of wages)"
     else:
-        solv_msg = f"CASH CRITICAL ({runway:.1f} steps runway)"
+        solv_msg = f"CASH CRITICAL (covers {runway:.1f} steps of wages)"
 
     if g > 0.1:
         gdp_msg = "economy booming"
@@ -201,12 +202,36 @@ def _generate_feedback(
             causes.append("revenue declining vs recent average")
 
     # Hiring effects
-    if info.hiring_cost > 0:
-        new_workers = int(info.hiring_cost / 500)  # HIRING_COST_PER_WORKER
+    if info.hires_filled > 0:
         if info.revenue > info.labor_cost:
-            causes.append(f"hired {new_workers} workers, boosting output")
+            causes.append(f"hired {info.hires_filled} workers, boosting output")
         else:
-            causes.append(f"hired {new_workers} workers, straining margins")
+            causes.append(f"hired {info.hires_filled} workers, straining margins")
+    if info.poached_in > 0:
+        causes.append(f"poached {info.poached_in} workers from competitors")
+    if info.hires_filled < info.hires_requested:
+        missed = info.hires_requested - info.hires_filled
+        if info.unemployed == 0:
+            causes.append(
+                f"could not fill {missed} openings -- no unemployed workers; "
+                f"pay 5%+ above rivals to poach"
+            )
+        else:
+            causes.append(
+                f"could not fill {missed} openings -- workers refuse "
+                f"${info.wage:.0f} (market ${info.market_wage:.0f})"
+            )
+    if info.fired > 0:
+        causes.append(f"fired {info.fired} workers")
+
+    # Labor market: losing workers
+    if info.quits > 0:
+        causes.append(
+            f"{info.quits} workers quit (your wage ${info.wage:.0f} "
+            f"vs market ${info.market_wage:.0f})"
+        )
+    if info.poached_out > 0:
+        causes.append(f"competitors poached {info.poached_out} of your workers")
 
     # Capex effects
     if info.capex_spent > 0:

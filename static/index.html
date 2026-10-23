@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenEnv Market</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <h1>OpenEnv Market</h1>
+        <p class="subtitle">Run a firm. Compete with 4 rivals for customers and workers.</p>
+      </div>
+    </div>
+    <div class="topbar-controls">
+      <label class="field-inline">Difficulty
+        <select id="difficulty"></select>
+      </label>
+      <label class="field-inline">Seed
+        <input id="seed" type="number" value="42" min="0" step="1">
+      </label>
+      <button id="btn-reset" class="btn">New game</button>
+      <button id="btn-theme" class="btn btn-ghost" aria-label="Toggle dark mode" title="Toggle theme">◐</button>
+    </div>
+  </header>
+
+  <div class="progress" aria-hidden="true"><div id="progress-bar"></div></div>
+
+  <main class="layout">
+    <!-- ===== Controls ===== -->
+    <aside class="card controls">
+      <div class="card-head">
+        <h2>Your decisions</h2>
+        <span id="step-label" class="pill">Step 0 / 30</span>
+      </div>
+
+      <div class="control">
+        <div class="control-row"><label for="in-price">Price</label><output id="out-price">$10.00</output></div>
+        <input id="in-price" type="range" min="4" max="20" step="0.1" value="10">
+        <p class="hint" id="hint-price">Rivals charge about $10.00</p>
+      </div>
+
+      <div class="control">
+        <div class="control-row"><label for="in-wage">Wage target</label><output id="out-wage">$500</output></div>
+        <input id="in-wage" type="range" min="300" max="1000" step="10" value="500">
+        <p class="hint" id="hint-wage">Current $500 · market $500 · moves ≤10%/step</p>
+      </div>
+
+      <div class="control">
+        <div class="control-row"><label for="in-hire">Hire / fire</label><output id="out-hire">0</output></div>
+        <input id="in-hire" type="range" min="-5" max="10" step="1" value="0">
+        <p class="hint" id="hint-hire">One-time this step · 5 unemployed</p>
+      </div>
+
+      <div class="control">
+        <div class="control-row"><label for="in-capex">Invest (capex)</label><output id="out-capex">$0</output></div>
+        <input id="in-capex" type="range" min="0" max="5000" step="250" value="0">
+        <p class="hint">One-time this step</p>
+      </div>
+
+      <div class="control">
+        <div class="control-row"><label for="in-lobby">Lobby tax change</label><output id="out-lobby">0 pts</output></div>
+        <input id="in-lobby" type="range" min="-0.1" max="0.1" step="0.01" value="0">
+        <p class="hint" id="hint-lobby">Tax rate 15% · one-time this step</p>
+      </div>
+
+      <div class="actions">
+        <button id="btn-step" class="btn btn-primary" title="Shortcut: Space">Next step</button>
+        <button id="btn-auto5" class="btn">Auto ×5</button>
+        <button id="btn-end" class="btn">To the end</button>
+      </div>
+
+      <div class="sales" id="sales">
+        <h3>Last step</h3>
+        <div class="meter" aria-hidden="true"><div id="meter-fill"></div></div>
+        <dl class="kv" id="sales-kv"></dl>
+      </div>
+    </aside>
+
+    <!-- ===== Main ===== -->
+    <section class="main">
+      <div class="tiles">
+        <div class="tile"><span class="tile-label">Cash</span><span class="tile-value" id="t-cash">$10,000</span><span class="tile-delta" id="d-cash"></span></div>
+        <div class="tile"><span class="tile-label">Workers</span><span class="tile-value" id="t-workers">5</span><span class="tile-delta" id="d-workers"></span></div>
+        <div class="tile"><span class="tile-label">Market share</span><span class="tile-value" id="t-share">20%</span><span class="tile-delta" id="d-share"></span></div>
+        <div class="tile"><span class="tile-label">Step reward</span><span class="tile-value" id="t-reward">–</span><span class="tile-delta" id="d-reward"></span></div>
+      </div>
+
+      <div class="charts">
+        <figure class="card chart-card">
+          <figcaption><h2>Cash by firm</h2><div class="legend" id="legend-cash"></div></figcaption>
+          <div class="chart-box"><canvas id="c-cash" aria-label="Line chart of cash by firm over time"></canvas></div>
+        </figure>
+        <figure class="card chart-card">
+          <figcaption><h2>Training reward</h2><p class="caption">Composite per step, and what made up the latest one</p></figcaption>
+          <div class="reward-split">
+            <div class="chart-box"><canvas id="c-reward" aria-label="Line chart of reward per step"></canvas></div>
+            <div class="breakdown" id="breakdown"></div>
+          </div>
+        </figure>
+        <figure class="card chart-card">
+          <figcaption><h2>Your price vs rivals</h2><div class="legend" id="legend-price"></div></figcaption>
+          <div class="chart-box"><canvas id="c-price" aria-label="Line chart of your price and rivals' average price"></canvas></div>
+        </figure>
+        <figure class="card chart-card">
+          <figcaption><h2>Your wage vs market</h2><div class="legend" id="legend-wage"></div></figcaption>
+          <div class="chart-box"><canvas id="c-wage" aria-label="Line chart of your wage and the market wage"></canvas></div>
+        </figure>
+      </div>
+
+      <section class="card labor">
+        <div class="card-head">
+          <h2>Labor market</h2>
+          <span class="caption" id="labor-caption">30 workers in the economy</span>
+        </div>
+        <div class="firms" id="firms"></div>
+        <ul class="flows" id="flows" aria-live="polite"></ul>
+      </section>
+
+      <section class="card feed-card">
+        <div class="card-head"><h2>Commentary</h2><span class="caption">Why the reward moved, newest first</span></div>
+        <ol class="feed" id="feed"></ol>
+      </section>
+
+      <details class="card table-card">
+        <summary>Data table</summary>
+        <div class="table-wrap">
+          <table id="history-table">
+            <thead><tr><th>Step</th><th>Cash</th><th>Workers</th><th>Price</th><th>Wage</th><th>Sold</th><th>Share</th><th>Reward</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h2 id="modal-title">Episode complete</h2>
+      <p id="modal-sub" class="caption"></p>
+      <div class="modal-stats" id="modal-stats"></div>
+      <div class="actions">
+        <button id="btn-again" class="btn btn-primary">Play again</button>
+        <button id="btn-close" class="btn">Review charts</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

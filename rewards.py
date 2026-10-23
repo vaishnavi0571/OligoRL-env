@@ -9,13 +9,14 @@ for testing.
 """
 
 import math
-from typing import List
+from typing import List, Tuple
 
 from config import (
     IHS_MAX_RATIO, REVENUE_FLOOR, CAPEX_AMORTIZATION_STEPS, IHS_CLIP,
     SOLVENCY_STEEPNESS, BURN_RATE_EPSILON,
     GDP_FLOOR_EPSILON,
     GINI_THRESHOLD, GINI_EXPONENT, GINI_WEALTH_FLOOR,
+    WAGE_RUNWAY_CAP_MULT, WAGE_RUNWAY_STEEPNESS, ACTIVITY_REFERENCE_UNITS,
 )
 
 
@@ -134,6 +135,39 @@ def solvency_score(
     exponent = max(-500.0, min(500.0, exponent))
 
     return 1.0 / (1.0 + math.exp(exponent))
+
+
+def wage_runway_score(
+    firm_cash: float,
+    wage_bill: float,
+    target: float,
+    cap_mult: float = WAGE_RUNWAY_CAP_MULT,
+    steepness: float = WAGE_RUNWAY_STEEPNESS,
+) -> Tuple[float, float]:
+    """Sigmoid of how many steps of wages current cash covers (capped).
+
+    Used by the training reward instead of solvency_score (config 7c).
+    A firm with no wage bill gets the cap -- the activity gate decides
+    whether it deserves credit.
+
+    Returns:
+        (score in (0, 1), capped wage runway in steps)
+    """
+    cap = cap_mult * target
+    if wage_bill <= 0:
+        runway = cap
+    else:
+        runway = min(max(firm_cash, 0.0) / wage_bill, cap)
+    exponent = -steepness * (runway - target) / target
+    return 1.0 / (1.0 + math.exp(exponent)), runway
+
+
+def activity_factor(
+    units_sold: float,
+    reference_units: float = ACTIVITY_REFERENCE_UNITS,
+) -> float:
+    """Fraction of baseline output actually SOLD, in [0, 1]."""
+    return min(max(units_sold, 0.0) / reference_units, 1.0)
 
 
 # -----------------------------------------------------------------
