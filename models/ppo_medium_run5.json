@@ -1,0 +1,104 @@
+{
+  "name": "ppo_medium_run5",
+  "source_checkpoint": "results/ppo/runs/seed_5/model_best.zip",
+  "n_hidden_layers": 2,
+  "hidden_sizes": [
+    64,
+    64
+  ],
+  "activation": "tanh",
+  "obs_dim": 14,
+  "action_dim": 3,
+  "eval_action": "mean (deterministic), then clip to raw bound, tanh, decode",
+  "spaces": {
+    "obs_spec": [
+      {
+        "name": "cash_vs_start",
+        "offset": 3.0,
+        "scale": 3.0
+      },
+      {
+        "name": "net_worth_vs_start",
+        "offset": 3.0,
+        "scale": 3.0
+      },
+      {
+        "name": "wage_vs_market",
+        "offset": 1.0,
+        "scale": 0.2
+      },
+      {
+        "name": "price_vs_rivals",
+        "offset": 1.0,
+        "scale": 0.3
+      },
+      {
+        "name": "progress",
+        "offset": 0.5,
+        "scale": 0.5
+      },
+      {
+        "name": "workers_share",
+        "offset": 0.2,
+        "scale": 0.2
+      },
+      {
+        "name": "unemployed_share",
+        "offset": 0.1,
+        "scale": 0.1
+      },
+      {
+        "name": "demand_vs_capacity",
+        "offset": 2.0,
+        "scale": 2.0
+      },
+      {
+        "name": "utilization",
+        "offset": 0.8,
+        "scale": 0.4
+      },
+      {
+        "name": "market_wage_vs_default",
+        "offset": 1.0,
+        "scale": 0.2
+      },
+      {
+        "name": "rival_price_vs_default",
+        "offset": 1.0,
+        "scale": 0.1
+      },
+      {
+        "name": "tax_rate",
+        "offset": 0.15,
+        "scale": 0.1
+      },
+      {
+        "name": "workers_lost_share",
+        "offset": 0.0,
+        "scale": 0.2
+      },
+      {
+        "name": "payroll_runway_steps",
+        "offset": 5.0,
+        "scale": 5.0
+      }
+    ],
+    "obs_clip": 5.0,
+    "action_names": [
+      "price",
+      "wage",
+      "hire"
+    ],
+    "raw_action_bound": 3.0,
+    "price_log2_range": 1.0,
+    "wage_down": 0.1,
+    "wage_up": 0.2,
+    "hire_deadzone": 0.1,
+    "hire_fraction": 0.4,
+    "fire_fraction": 0.2,
+    "bound_margin": 0.05
+  },
+  "run_seed": 5,
+  "best_val_net_worth": 39431.71049141901,
+  "best_step": 696320
+}

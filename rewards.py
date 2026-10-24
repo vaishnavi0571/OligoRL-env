@@ -17,6 +17,8 @@ from config import (
     GDP_FLOOR_EPSILON,
     GINI_THRESHOLD, GINI_EXPONENT, GINI_WEALTH_FLOOR,
     WAGE_RUNWAY_CAP_MULT, WAGE_RUNWAY_STEEPNESS, ACTIVITY_REFERENCE_UNITS,
+    INITIAL_FIRM_CASH, BANKRUPTCY_PENALTY,
+    PPO_HINGE_RUNWAY_STEPS, PPO_HINGE_MAX_TOTAL,
 )
 
 
@@ -160,6 +162,35 @@ def wage_runway_score(
         runway = min(max(firm_cash, 0.0) / wage_bill, cap)
     exponent = -steepness * (runway - target) / target
     return 1.0 / (1.0 + math.exp(exponent)), runway
+
+
+def net_worth_reward(
+    prev_net_worth: float,
+    net_worth: float,
+    cash: float,
+    wage_bill: float,
+    episode_length: int,
+    start_cash: float = INITIAL_FIRM_CASH,
+    bankruptcy_penalty: float = BANKRUPTCY_PENALTY,
+    hinge_runway_steps: float = PPO_HINGE_RUNWAY_STEPS,
+    hinge_max_total: float = PPO_HINGE_MAX_TOTAL,
+) -> Tuple[float, float, float]:
+    """PPO training reward (config 7e): net-worth delta + solvency hinge.
+
+    net_worth must already include the bankruptcy penalty on the step the
+    firm goes bankrupt (agents.terminal_net_worth does).
+
+    Returns:
+        (reward, delta_component, hinge_component)
+    """
+    delta = (net_worth - prev_net_worth) / start_cash
+    k = hinge_max_total * (bankruptcy_penalty / start_cash) / episode_length
+    if wage_bill > 0:
+        runway = max(cash, 0.0) / wage_bill
+        hinge = -k * max(0.0, 1.0 - runway / hinge_runway_steps)
+    else:
+        hinge = 0.0
+    return delta + hinge, delta, hinge
 
 
 def activity_factor(

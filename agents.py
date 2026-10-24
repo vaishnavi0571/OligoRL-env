@@ -9,6 +9,7 @@ Every agent plays the same seeds (common random numbers), and results
 are reported as a mean with a 95% confidence interval.
 """
 
+import os
 import random
 import statistics
 from functools import lru_cache
@@ -158,11 +159,16 @@ class PoachToSpillAgent(Agent):
 
 
 class SpillParasiteAgent(Agent):
-    """Exploit probe: price above rivals to keep idle capacity, and live
-    off the customers that capacity-constrained rivals turn away."""
+    """Prices 10% above rivals and grows to 8 workers.
+
+    Built as an exploit probe for demand spillover (keep idle capacity,
+    live off rivals' turned-away customers), but checkpoint 1 showed its
+    lead over the rule-based agent is LARGER with spillover off -- it is
+    simply a strong premium-pricing strategy.  Internal name kept so the
+    golden test and saved results stay comparable."""
     name = "spill_parasite"
-    label = "Overflow parasite"
-    description = "Exploit probe: prices 10% high, keeps spare capacity for rivals' overflow"
+    label = "Premium pricer"
+    description = "Prices 10% above rivals and grows to 8 workers (best scripted agent)"
 
     def act(self, obs: Dict) -> Dict:
         return {"set_price": 1.1 * DEFAULT_PRICE,
@@ -187,12 +193,31 @@ class RandomAgent(Agent):
                 "hire_workers": self.rng.randint(-2, 3)}
 
 
+PPO_MODEL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "ppo_medium")
+
+
+class PPOAgent(Agent):
+    """Trained PPO policy (numpy-only inference; see ppo/).  Mean action."""
+    name = "ppo"
+    label = "PPO (trained)"
+    description = "Trained with PPO on the net-worth reward; best of 5 runs by validation"
+
+    def __init__(self):
+        from ppo.policy_numpy import NumpyPolicy   # numpy only, no torch
+        self.policy = NumpyPolicy(PPO_MODEL + ".npz", PPO_MODEL + ".json")
+
+    def act(self, obs: Dict) -> Dict:
+        return self.policy.act(obs)
+
+
 AGENTS = {
     cls.name: cls for cls in (
         RuleBasedAgent, HoldAgent, MarketPlusEpsAgent, AlwaysFloorAgent,
         AlwaysMaxAgent, PoachToSpillAgent, SpillParasiteAgent, RandomAgent,
     )
 }
+if os.path.exists(PPO_MODEL + ".npz") and os.path.exists(PPO_MODEL + ".json"):
+    AGENTS[PPOAgent.name] = PPOAgent
 
 
 # -----------------------------------------------------------------
@@ -200,14 +225,19 @@ AGENTS = {
 # -----------------------------------------------------------------
 
 def run_episode(agent: Agent, difficulty: str = "medium", seed: int = 0,
-                spillover_fraction=None, record: bool = False) -> Dict:
+                spillover_fraction=None, record: bool = False,
+                npc_profile: str = "default", lobbying_enabled: bool = True,
+                npc_growth: bool = True) -> Dict:
     """Play one full episode; returns summary stats.
 
     With record=True also returns the player's net worth after every step
-    (index 0 = start) under "worth_curve".
+    (index 0 = start) under "worth_curve".  npc_profile / lobbying_enabled
+    are the opt-in experiment flags (defaults = leaderboard rules).
     """
     sim = EconSimulator(difficulty=difficulty, seed=seed,
-                        spillover_fraction=spillover_fraction)
+                        spillover_fraction=spillover_fraction,
+                        npc_profile=npc_profile, lobbying_enabled=lobbying_enabled,
+                        npc_growth=npc_growth)
     obs = sim.reset()
     agent.reset(seed)
     total_reward = 0.0

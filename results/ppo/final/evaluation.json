@@ -1,0 +1,3026 @@
+{
+  "runs": {
+    "1": {
+      "best_val_net_worth": 39096.95418256925,
+      "best_step": 700416,
+      "parity": {
+        "n_obs": 1000,
+        "max_abs_diff_raw_mean": 3.4395159009825704e-07,
+        "max_abs_diff_squashed": 1.4485087468374402e-07
+      },
+      "default": {
+        "mean": 38624.09726538487,
+        "ci": 517.362295178484,
+        "bankrupt": 0,
+        "vs": {
+          "rule_based": {
+            "mean_diff": 4840.8421980360745,
+            "ci": 477.82343475364837,
+            "lo": 4363.018763282426,
+            "hi": 5318.665632789723,
+            "win_rate": 0.915
+          },
+          "hold": {
+            "mean_diff": 23838.597265384877,
+            "ci": 512.4959109754985,
+            "lo": 23326.101354409377,
+            "hi": 24351.093176360377,
+            "win_rate": 1.0
+          },
+          "market+eps": {
+            "mean_diff": 13040.984836094156,
+            "ci": 599.286098586649,
+            "lo": 12441.698737507508,
+            "hi": 13640.270934680804,
+            "win_rate": 1.0
+          },
+          "always_floor": {
+            "mean_diff": 26401.582927884876,
+            "ci": 519.9565840068967,
+            "lo": 25881.62634387798,
+            "hi": 26921.539511891773,
+            "win_rate": 1.0
+          },
+          "always_max": {
+            "mean_diff": 52618.757243895794,
+            "ci": 678.2698951651823,
+            "lo": 51940.48734873061,
+            "hi": 53297.02713906098,
+            "win_rate": 1.0
+          },
+          "poach_to_spill": {
+            "mean_diff": 49537.40672412432,
+            "ci": 533.7685628339149,
+            "lo": 49003.6381612904,
+            "hi": 50071.175286958234,
+            "win_rate": 1.0
+          },
+          "spill_parasite": {
+            "mean_diff": 21038.601428315942,
+            "ci": 502.8933589104539,
+            "lo": 20535.70806940549,
+            "hi": 21541.494787226395,
+            "win_rate": 1.0
+          },
+          "random": {
+            "mean_diff": 35961.182054696124,
+            "ci": 1191.7004992964887,
+            "lo": 34769.48155539964,
+            "hi": 37152.88255399261,
+            "win_rate": 1.0
+          }
+        }
+      },
+      "heldout": {
+        "mean": 44554.03636485854,
+        "ci": 6032.743702768554,
+        "bankrupt": 0.125,
+        "vs": {
+          "rule_based": {
+            "mean_diff": 830.3146474354284,
+            "ci": 1976.6116560600367,
+            "lo": -1146.2970086246082,
+            "hi": 2806.926303495465,
+            "win_rate": 0.465
+          },
+          "hold": {
+            "mean_diff": 26417.079479687254,
+            "ci": 4721.91463808166,
+            "lo": 21695.164841605594,
+            "hi": 31138.994117768914,
+            "win_rate": 0.76
+          },
+          "market+eps": {
+            "mean_diff": 34454.51233264113,
+            "ci": 3174.5599298729862,
+            "lo": 31279.95240276814,
+            "hi": 37629.07226251411,
+            "win_rate": 0.99
+          },
+          "always_floor": {
+            "mean_diff": 33061.066499621484,
+            "ci": 5835.376524378093,
+            "lo": 27225.68997524339,
+            "hi": 38896.44302399958,
+            "win_rate": 0.795
+          },
+          "always_max": {
+            "mean_diff": 58751.103843770434,
+            "ci": 6156.971274712843,
+            "lo": 52594.13256905759,
+            "hi": 64908.07511848328,
+            "win_rate": 0.985
+          },
+          "poach_to_spill": {
+            "mean_diff": 50695.75098976168,
+            "ci": 5098.644643795974,
+            "lo": 45597.1063459657,
+            "hi": 55794.39563355765,
+            "win_rate": 0.99
+          },
+          "spill_parasite": {
+            "mean_diff": 25504.624255739032,
+            "ci": 3278.9646900586076,
+            "lo": 22225.659565680424,
+            "hi": 28783.58894579764,
+            "win_rate": 0.98
+          },
+          "random": {
+            "mean_diff": 51244.13741942242,
+            "ci": 5242.605132593166,
+            "lo": 46001.53228682926,
+            "hi": 56486.74255201558,
+            "win_rate": 0.985
+          }
+        }
+      },
+      "gap_closed": {
+        "point": 1.5903363406837585,
+        "lo": 1.5014727178492822,
+        "hi": 1.691890384556781
+      },
+      "gap_closed_hold": {
+        "point": 1.254811275378319,
+        "lo": 1.224331051201849,
+        "hi": 1.2862486133248991
+      },
+      "criteria": {
+        "P1": true,
+        "P2_pass": true,
+        "P2_strong": true,
+        "P2_stretch": true,
+        "P3": true,
+        "H1": true,
+        "H2a": true,
+        "H2b": false,
+        "H2c": false,
+        "H2": false
+      },
+      "ratios": {
+        "ppo_over_bench_default": 1.1432911715696308,
+        "ppo_over_bench_heldout": 1.0189900268051648
+      },
+      "B1": {
+        "mean_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sampled_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sampled_policy_mean_net_worth": 35476.971558415564,
+        "pass": true
+      },
+      "B2": {
+        "share_episodes_hiring_late": 0.99,
+        "mean_cost_of_late_hiring": 130.4125695173227,
+        "ci": 34.07523265616248
+      },
+      "audit_default": {
+        "mean_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "wage_vs_market": {
+          "p5": 0.9499290200595777,
+          "p50": 0.9924355390182884,
+          "p95": 1.0719173631655459,
+          "histogram_edges": [
+            0.875,
+            0.9,
+            0.925,
+            0.95,
+            0.975,
+            1.0,
+            1.025,
+            1.05,
+            1.075,
+            1.1,
+            1.125,
+            1.15,
+            1.175,
+            1.2,
+            1.225
+          ],
+          "histogram_counts": [
+            0,
+            1,
+            300,
+            1111,
+            2225,
+            1450,
+            452,
+            181,
+            69,
+            74,
+            137,
+            0,
+            0,
+            0
+          ]
+        },
+        "price_set": {
+          "p5": 10.336140857947008,
+          "p50": 11.085921458879536,
+          "p95": 11.613625986290359
+        },
+        "hiring_by_step": {
+          "1": {
+            "mean_hire_request": -1,
+            "mean_workers": 3.85
+          },
+          "2": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.83
+          },
+          "3": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.83
+          },
+          "4": {
+            "mean_hire_request": 1.735,
+            "mean_workers": 7.56
+          },
+          "5": {
+            "mean_hire_request": 1.795,
+            "mean_workers": 9.095
+          },
+          "6": {
+            "mean_hire_request": 1.63,
+            "mean_workers": 9.42
+          },
+          "7": {
+            "mean_hire_request": 1.195,
+            "mean_workers": 9.195
+          },
+          "8": {
+            "mean_hire_request": 1.05,
+            "mean_workers": 8.73
+          },
+          "9": {
+            "mean_hire_request": 1.01,
+            "mean_workers": 8.135
+          },
+          "10": {
+            "mean_hire_request": 0.98,
+            "mean_workers": 7.575
+          },
+          "11": {
+            "mean_hire_request": 0.96,
+            "mean_workers": 7.03
+          },
+          "12": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 6.685
+          },
+          "13": {
+            "mean_hire_request": 0.975,
+            "mean_workers": 6.48
+          },
+          "14": {
+            "mean_hire_request": 0.98,
+            "mean_workers": 6.325
+          },
+          "15": {
+            "mean_hire_request": 0.985,
+            "mean_workers": 6.245
+          },
+          "16": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.17
+          },
+          "17": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 6.06
+          },
+          "18": {
+            "mean_hire_request": 0.985,
+            "mean_workers": 5.955
+          },
+          "19": {
+            "mean_hire_request": 0.965,
+            "mean_workers": 5.915
+          },
+          "20": {
+            "mean_hire_request": 0.98,
+            "mean_workers": 5.795
+          },
+          "21": {
+            "mean_hire_request": 0.985,
+            "mean_workers": 5.655
+          },
+          "22": {
+            "mean_hire_request": 0.985,
+            "mean_workers": 5.505
+          },
+          "23": {
+            "mean_hire_request": 0.985,
+            "mean_workers": 5.415
+          },
+          "24": {
+            "mean_hire_request": 0.98,
+            "mean_workers": 5.325
+          },
+          "25": {
+            "mean_hire_request": 0.975,
+            "mean_workers": 5.16
+          },
+          "26": {
+            "mean_hire_request": 0.985,
+            "mean_workers": 4.925
+          },
+          "27": {
+            "mean_hire_request": 0.985,
+            "mean_workers": 4.765
+          },
+          "28": {
+            "mean_hire_request": 0.975,
+            "mean_workers": 4.655
+          },
+          "29": {
+            "mean_hire_request": 0.985,
+            "mean_workers": 4.5
+          },
+          "30": {
+            "mean_hire_request": 0.985,
+            "mean_workers": 4.385
+          }
+        },
+        "worst_episodes": [
+          [
+            10023,
+            28052
+          ],
+          [
+            10070,
+            29246
+          ],
+          [
+            10022,
+            29619
+          ]
+        ],
+        "best_episodes": [
+          [
+            10104,
+            46691
+          ],
+          [
+            10116,
+            48107
+          ],
+          [
+            10010,
+            49438
+          ]
+        ],
+        "corr_return_networth": 1.0,
+        "max_telescoping_residual": 1.3322676295501878e-15
+      },
+      "audit_heldout": {
+        "mean_action_at_bound": [
+          0.0,
+          0.003270223752151463,
+          0.0
+        ],
+        "wage_vs_market": {
+          "p5": 0.943875302811504,
+          "p50": 1.0,
+          "p95": 1.0403536968557983,
+          "histogram_edges": [
+            0.875,
+            0.9,
+            0.925,
+            0.95,
+            0.975,
+            1.0,
+            1.025,
+            1.05,
+            1.075,
+            1.1,
+            1.125,
+            1.15,
+            1.175,
+            1.2,
+            1.225
+          ],
+          "histogram_counts": [
+            43,
+            73,
+            196,
+            134,
+            76,
+            4802,
+            162,
+            107,
+            39,
+            16,
+            30,
+            18,
+            1,
+            0
+          ]
+        },
+        "price_set": {
+          "p5": 6.70188360595404,
+          "p50": 10.744797300790786,
+          "p95": 12.459657058984552
+        },
+        "hiring_by_step": {
+          "1": {
+            "mean_hire_request": -1,
+            "mean_workers": 3.835
+          },
+          "2": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.795
+          },
+          "3": {
+            "mean_hire_request": 0.965,
+            "mean_workers": 5.395
+          },
+          "4": {
+            "mean_hire_request": 1.14,
+            "mean_workers": 5.755
+          },
+          "5": {
+            "mean_hire_request": 1.26,
+            "mean_workers": 6.125
+          },
+          "6": {
+            "mean_hire_request": 1.365,
+            "mean_workers": 6.56
+          },
+          "7": {
+            "mean_hire_request": 1.455,
+            "mean_workers": 7.275
+          },
+          "8": {
+            "mean_hire_request": 1.43,
+            "mean_workers": 8.115
+          },
+          "9": {
+            "mean_hire_request": 1.345,
+            "mean_workers": 8.775
+          },
+          "10": {
+            "mean_hire_request": 1.245,
+            "mean_workers": 9.3
+          },
+          "11": {
+            "mean_hire_request": 1.205,
+            "mean_workers": 9.75
+          },
+          "12": {
+            "mean_hire_request": 1.175,
+            "mean_workers": 10.08
+          },
+          "13": {
+            "mean_hire_request": 1.21,
+            "mean_workers": 10.205
+          },
+          "14": {
+            "mean_hire_request": 1.14,
+            "mean_workers": 10.175
+          },
+          "15": {
+            "mean_hire_request": 1.1,
+            "mean_workers": 10.075
+          },
+          "16": {
+            "mean_hire_request": 1.1565656565656566,
+            "mean_workers": 10.136363636363637
+          },
+          "17": {
+            "mean_hire_request": 1.1313131313131313,
+            "mean_workers": 10.156565656565656
+          },
+          "18": {
+            "mean_hire_request": 1.0609137055837563,
+            "mean_workers": 10.33502538071066
+          },
+          "19": {
+            "mean_hire_request": 1.0051546391752577,
+            "mean_workers": 10.170103092783505
+          },
+          "20": {
+            "mean_hire_request": 0.8489583333333334,
+            "mean_workers": 9.942708333333334
+          },
+          "21": {
+            "mean_hire_request": 0.7801047120418848,
+            "mean_workers": 9.811518324607329
+          },
+          "22": {
+            "mean_hire_request": 0.7195767195767195,
+            "mean_workers": 9.666666666666666
+          },
+          "23": {
+            "mean_hire_request": 0.7219251336898396,
+            "mean_workers": 9.695187165775401
+          },
+          "24": {
+            "mean_hire_request": 0.6810810810810811,
+            "mean_workers": 9.47027027027027
+          },
+          "25": {
+            "mean_hire_request": 0.6521739130434783,
+            "mean_workers": 9.347826086956522
+          },
+          "26": {
+            "mean_hire_request": 0.6153846153846154,
+            "mean_workers": 9.137362637362637
+          },
+          "27": {
+            "mean_hire_request": 0.5714285714285714,
+            "mean_workers": 8.934065934065934
+          },
+          "28": {
+            "mean_hire_request": 0.5166666666666667,
+            "mean_workers": 8.63888888888889
+          },
+          "29": {
+            "mean_hire_request": 0.5170454545454546,
+            "mean_workers": 8.142045454545455
+          },
+          "30": {
+            "mean_hire_request": 0.42857142857142855,
+            "mean_workers": 7.68
+          }
+        },
+        "worst_episodes": [
+          [
+            20083,
+            -10949
+          ],
+          [
+            20163,
+            -10841
+          ],
+          [
+            20038,
+            -10806
+          ]
+        ],
+        "best_episodes": [
+          [
+            20041,
+            151347
+          ],
+          [
+            20137,
+            175260
+          ],
+          [
+            20184,
+            176714
+          ]
+        ],
+        "corr_return_networth": 0.9999909792346297,
+        "max_telescoping_residual": 3.552713678800501e-15
+      }
+    },
+    "2": {
+      "best_val_net_worth": 38037.82464258681,
+      "best_step": 675840,
+      "parity": {
+        "n_obs": 1000,
+        "max_abs_diff_raw_mean": 4.2161567259668686e-07,
+        "max_abs_diff_squashed": 1.5328570568406974e-07
+      },
+      "default": {
+        "mean": 37709.19031986223,
+        "ci": 503.7809451714774,
+        "bankrupt": 0,
+        "vs": {
+          "rule_based": {
+            "mean_diff": 3925.9352525134314,
+            "ci": 494.6997492837071,
+            "lo": 3431.235503229724,
+            "hi": 4420.635001797138,
+            "win_rate": 0.865
+          },
+          "hold": {
+            "mean_diff": 22923.69031986223,
+            "ci": 495.4597992260514,
+            "lo": 22428.23052063618,
+            "hi": 23419.15011908828,
+            "win_rate": 1.0
+          },
+          "market+eps": {
+            "mean_diff": 12126.077890571512,
+            "ci": 591.8897705900812,
+            "lo": 11534.18811998143,
+            "hi": 12717.967661161594,
+            "win_rate": 1.0
+          },
+          "always_floor": {
+            "mean_diff": 25486.675982362234,
+            "ci": 501.7184897900067,
+            "lo": 24984.957492572226,
+            "hi": 25988.394472152242,
+            "win_rate": 1.0
+          },
+          "always_max": {
+            "mean_diff": 51703.85029837315,
+            "ci": 673.6882066868676,
+            "lo": 51030.16209168628,
+            "hi": 52377.53850506002,
+            "win_rate": 1.0
+          },
+          "poach_to_spill": {
+            "mean_diff": 48622.499778601676,
+            "ci": 528.8137313280198,
+            "lo": 48093.68604727366,
+            "hi": 49151.31350992969,
+            "win_rate": 1.0
+          },
+          "spill_parasite": {
+            "mean_diff": 20123.6944827933,
+            "ci": 490.1584528718909,
+            "lo": 19633.536029921408,
+            "hi": 20613.852935665192,
+            "win_rate": 1.0
+          },
+          "random": {
+            "mean_diff": 35046.27510917348,
+            "ci": 1196.0063079577408,
+            "lo": 33850.268801215745,
+            "hi": 36242.28141713122,
+            "win_rate": 1.0
+          }
+        }
+      },
+      "heldout": {
+        "mean": 47721.815544855366,
+        "ci": 5108.004802922977,
+        "bankrupt": 0,
+        "vs": {
+          "rule_based": {
+            "mean_diff": 3998.093827432254,
+            "ci": 1505.2863718648161,
+            "lo": 2492.8074555674375,
+            "hi": 5503.38019929707,
+            "win_rate": 0.635
+          },
+          "hold": {
+            "mean_diff": 29584.85865968408,
+            "ci": 4088.367341436772,
+            "lo": 25496.491318247306,
+            "hi": 33673.22600112085,
+            "win_rate": 0.82
+          },
+          "market+eps": {
+            "mean_diff": 37622.29151263795,
+            "ci": 2352.9102450360338,
+            "lo": 35269.381267601915,
+            "hi": 39975.20175767399,
+            "win_rate": 1.0
+          },
+          "always_floor": {
+            "mean_diff": 36228.84567961831,
+            "ci": 5023.023732275293,
+            "lo": 31205.821947343014,
+            "hi": 41251.869411893604,
+            "win_rate": 0.925
+          },
+          "always_max": {
+            "mean_diff": 61918.88302376726,
+            "ci": 5232.5242449517145,
+            "lo": 56686.35877881554,
+            "hi": 67151.40726871898,
+            "win_rate": 1.0
+          },
+          "poach_to_spill": {
+            "mean_diff": 53863.5301697585,
+            "ci": 4330.889688616038,
+            "lo": 49532.640481142465,
+            "hi": 58194.41985837454,
+            "win_rate": 1.0
+          },
+          "spill_parasite": {
+            "mean_diff": 28672.403435735858,
+            "ci": 2676.60410010794,
+            "lo": 25995.79933562792,
+            "hi": 31349.007535843797,
+            "win_rate": 0.98
+          },
+          "random": {
+            "mean_diff": 54411.916599419244,
+            "ci": 4335.516212551381,
+            "lo": 50076.40038686786,
+            "hi": 58747.432811970626,
+            "win_rate": 1.0
+          }
+        }
+      },
+      "gap_closed": {
+        "point": 1.478764263720557,
+        "lo": 1.394180705898502,
+        "hi": 1.5753076363921612
+      },
+      "gap_closed_hold": {
+        "point": 1.2066525880871513,
+        "lo": 1.1755237903013342,
+        "hi": 1.2390403140653228
+      },
+      "criteria": {
+        "P1": true,
+        "P2_pass": true,
+        "P2_strong": true,
+        "P2_stretch": true,
+        "P3": true,
+        "H1": true,
+        "H2a": true,
+        "H2b": true,
+        "H2c": true,
+        "H2": true
+      },
+      "ratios": {
+        "ppo_over_bench_default": 1.1162095021538587,
+        "ppo_over_bench_heldout": 1.0914399248369355
+      },
+      "B1": {
+        "mean_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sampled_action_at_bound": [
+          0.0,
+          0.0006666666666666666,
+          0.0
+        ],
+        "sampled_policy_mean_net_worth": 34144.19059613948,
+        "pass": true
+      },
+      "B2": {
+        "share_episodes_hiring_late": 1.0,
+        "mean_cost_of_late_hiring": 94.72417650159113,
+        "ci": 47.70798423255838
+      },
+      "audit_default": {
+        "mean_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "wage_vs_market": {
+          "p5": 0.9470902369286303,
+          "p50": 0.9892288342533097,
+          "p95": 1.0696205628796183,
+          "histogram_edges": [
+            0.875,
+            0.9,
+            0.925,
+            0.95,
+            0.975,
+            1.0,
+            1.025,
+            1.05,
+            1.075,
+            1.1,
+            1.125,
+            1.15,
+            1.175,
+            1.2,
+            1.225
+          ],
+          "histogram_counts": [
+            0,
+            3,
+            341,
+            1411,
+            2018,
+            1286,
+            400,
+            352,
+            113,
+            66,
+            10,
+            0,
+            0,
+            0
+          ]
+        },
+        "price_set": {
+          "p5": 10.545182266467386,
+          "p50": 11.230008310995293,
+          "p95": 11.78019425549877
+        },
+        "hiring_by_step": {
+          "1": {
+            "mean_hire_request": -1,
+            "mean_workers": 3.745
+          },
+          "2": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.645
+          },
+          "3": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.645
+          },
+          "4": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.645
+          },
+          "5": {
+            "mean_hire_request": 1,
+            "mean_workers": 7.56
+          },
+          "6": {
+            "mean_hire_request": 1.015,
+            "mean_workers": 7.865
+          },
+          "7": {
+            "mean_hire_request": 1.005,
+            "mean_workers": 7.64
+          },
+          "8": {
+            "mean_hire_request": 1.015,
+            "mean_workers": 7.13
+          },
+          "9": {
+            "mean_hire_request": 1.01,
+            "mean_workers": 6.62
+          },
+          "10": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.315
+          },
+          "11": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.07
+          },
+          "12": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.9
+          },
+          "13": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.765
+          },
+          "14": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.645
+          },
+          "15": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.645
+          },
+          "16": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.635
+          },
+          "17": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.605
+          },
+          "18": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.57
+          },
+          "19": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.46
+          },
+          "20": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.345
+          },
+          "21": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.26
+          },
+          "22": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.115
+          },
+          "23": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.98
+          },
+          "24": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.88
+          },
+          "25": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.675
+          },
+          "26": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.455
+          },
+          "27": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.29
+          },
+          "28": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.155
+          },
+          "29": {
+            "mean_hire_request": 1,
+            "mean_workers": 3.93
+          },
+          "30": {
+            "mean_hire_request": 1,
+            "mean_workers": 3.705
+          }
+        },
+        "worst_episodes": [
+          [
+            10022,
+            28206
+          ],
+          [
+            10070,
+            28233
+          ],
+          [
+            10114,
+            29012
+          ]
+        ],
+        "best_episodes": [
+          [
+            10095,
+            45387
+          ],
+          [
+            10016,
+            46075
+          ],
+          [
+            10018,
+            48512
+          ]
+        ],
+        "corr_return_networth": 1.0,
+        "max_telescoping_residual": 1.3322676295501878e-15
+      },
+      "audit_heldout": {
+        "mean_action_at_bound": [
+          0.0,
+          0.06366666666666666,
+          0.0
+        ],
+        "wage_vs_market": {
+          "p5": 0.9475651133921175,
+          "p50": 1.0,
+          "p95": 1.0,
+          "histogram_edges": [
+            0.875,
+            0.9,
+            0.925,
+            0.95,
+            0.975,
+            1.0,
+            1.025,
+            1.05,
+            1.075,
+            1.1,
+            1.125,
+            1.15,
+            1.175,
+            1.2,
+            1.225
+          ],
+          "histogram_counts": [
+            25,
+            63,
+            160,
+            131,
+            282,
+            5112,
+            43,
+            30,
+            24,
+            11,
+            13,
+            9,
+            1,
+            0
+          ]
+        },
+        "price_set": {
+          "p5": 6.906829830044932,
+          "p50": 10.748708476781628,
+          "p95": 12.762616377606664
+        },
+        "hiring_by_step": {
+          "1": {
+            "mean_hire_request": -1,
+            "mean_workers": 3.77
+          },
+          "2": {
+            "mean_hire_request": 0.95,
+            "mean_workers": 4.64
+          },
+          "3": {
+            "mean_hire_request": 0.895,
+            "mean_workers": 5.04
+          },
+          "4": {
+            "mean_hire_request": 1.01,
+            "mean_workers": 5.35
+          },
+          "5": {
+            "mean_hire_request": 1.17,
+            "mean_workers": 5.74
+          },
+          "6": {
+            "mean_hire_request": 1.285,
+            "mean_workers": 6.345
+          },
+          "7": {
+            "mean_hire_request": 1.305,
+            "mean_workers": 6.945
+          },
+          "8": {
+            "mean_hire_request": 1.195,
+            "mean_workers": 7.29
+          },
+          "9": {
+            "mean_hire_request": 1.09,
+            "mean_workers": 7.365
+          },
+          "10": {
+            "mean_hire_request": 1.045,
+            "mean_workers": 7.355
+          },
+          "11": {
+            "mean_hire_request": 1.03,
+            "mean_workers": 7.385
+          },
+          "12": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 7.435
+          },
+          "13": {
+            "mean_hire_request": 0.965,
+            "mean_workers": 7.415
+          },
+          "14": {
+            "mean_hire_request": 0.945,
+            "mean_workers": 7.465
+          },
+          "15": {
+            "mean_hire_request": 0.895,
+            "mean_workers": 7.465
+          },
+          "16": {
+            "mean_hire_request": 0.89,
+            "mean_workers": 7.625
+          },
+          "17": {
+            "mean_hire_request": 0.84,
+            "mean_workers": 7.555
+          },
+          "18": {
+            "mean_hire_request": 0.815,
+            "mean_workers": 7.545
+          },
+          "19": {
+            "mean_hire_request": 0.75,
+            "mean_workers": 7.58
+          },
+          "20": {
+            "mean_hire_request": 0.725,
+            "mean_workers": 7.51
+          },
+          "21": {
+            "mean_hire_request": 0.685,
+            "mean_workers": 7.43
+          },
+          "22": {
+            "mean_hire_request": 0.71,
+            "mean_workers": 7.385
+          },
+          "23": {
+            "mean_hire_request": 0.715,
+            "mean_workers": 7.44
+          },
+          "24": {
+            "mean_hire_request": 0.695,
+            "mean_workers": 7.415
+          },
+          "25": {
+            "mean_hire_request": 0.69,
+            "mean_workers": 7.43
+          },
+          "26": {
+            "mean_hire_request": 0.675,
+            "mean_workers": 7.345
+          },
+          "27": {
+            "mean_hire_request": 0.68,
+            "mean_workers": 7.25
+          },
+          "28": {
+            "mean_hire_request": 0.635,
+            "mean_workers": 7.245
+          },
+          "29": {
+            "mean_hire_request": 0.635,
+            "mean_workers": 7.335
+          },
+          "30": {
+            "mean_hire_request": 0.645,
+            "mean_workers": 7.305
+          }
+        },
+        "worst_episodes": [
+          [
+            20006,
+            1474
+          ],
+          [
+            20059,
+            5703
+          ],
+          [
+            20103,
+            6402
+          ]
+        ],
+        "best_episodes": [
+          [
+            20137,
+            141091
+          ],
+          [
+            20041,
+            141498
+          ],
+          [
+            20184,
+            149185
+          ]
+        ],
+        "corr_return_networth": 0.9999991675146639,
+        "max_telescoping_residual": 5.329070518200751e-15
+      }
+    },
+    "3": {
+      "best_val_net_worth": 38377.38626082904,
+      "best_step": 700416,
+      "parity": {
+        "n_obs": 1000,
+        "max_abs_diff_raw_mean": 3.6176205697735497e-07,
+        "max_abs_diff_squashed": 1.5324866781130098e-07
+      },
+      "default": {
+        "mean": 37806.613695144115,
+        "ci": 525.8502233422628,
+        "bankrupt": 0,
+        "vs": {
+          "rule_based": {
+            "mean_diff": 4023.3586277953127,
+            "ci": 473.796343491103,
+            "lo": 3549.5622843042097,
+            "hi": 4497.154971286416,
+            "win_rate": 0.875
+          },
+          "hold": {
+            "mean_diff": 23021.113695144115,
+            "ci": 522.3500019447346,
+            "lo": 22498.76369319938,
+            "hi": 23543.46369708885,
+            "win_rate": 1.0
+          },
+          "market+eps": {
+            "mean_diff": 12223.501265853394,
+            "ci": 603.519130054366,
+            "lo": 11619.982135799028,
+            "hi": 12827.02039590776,
+            "win_rate": 1.0
+          },
+          "always_floor": {
+            "mean_diff": 25584.099357644114,
+            "ci": 524.7273391009976,
+            "lo": 25059.372018543116,
+            "hi": 26108.826696745113,
+            "win_rate": 1.0
+          },
+          "always_max": {
+            "mean_diff": 51801.27367365503,
+            "ci": 671.287267436883,
+            "lo": 51129.986406218144,
+            "hi": 52472.56094109191,
+            "win_rate": 1.0
+          },
+          "poach_to_spill": {
+            "mean_diff": 48719.92315388355,
+            "ci": 524.2203689403303,
+            "lo": 48195.70278494322,
+            "hi": 49244.143522823884,
+            "win_rate": 1.0
+          },
+          "spill_parasite": {
+            "mean_diff": 20221.11785807518,
+            "ci": 519.0720506239128,
+            "lo": 19702.045807451268,
+            "hi": 20740.189908699092,
+            "win_rate": 1.0
+          },
+          "random": {
+            "mean_diff": 35143.698484455366,
+            "ci": 1216.3375519540514,
+            "lo": 33927.36093250132,
+            "hi": 36360.036036409416,
+            "win_rate": 1.0
+          }
+        }
+      },
+      "heldout": {
+        "mean": 45595.503400408445,
+        "ci": 5428.718817023049,
+        "bankrupt": 0.105,
+        "vs": {
+          "rule_based": {
+            "mean_diff": 1871.781682985334,
+            "ci": 1460.1355913808995,
+            "lo": 411.64609160443456,
+            "hi": 3331.917274366234,
+            "win_rate": 0.56
+          },
+          "hold": {
+            "mean_diff": 27458.546515237158,
+            "ci": 4102.954474571157,
+            "lo": 23355.592040666,
+            "hi": 31561.500989808315,
+            "win_rate": 0.88
+          },
+          "market+eps": {
+            "mean_diff": 35495.97936819103,
+            "ci": 2614.010980399955,
+            "lo": 32881.96838779107,
+            "hi": 38109.99034859099,
+            "win_rate": 0.995
+          },
+          "always_floor": {
+            "mean_diff": 34102.53353517139,
+            "ci": 5195.028881243618,
+            "lo": 28907.50465392777,
+            "hi": 39297.56241641501,
+            "win_rate": 0.855
+          },
+          "always_max": {
+            "mean_diff": 59792.570879320345,
+            "ci": 5557.50956672425,
+            "lo": 54235.061312596095,
+            "hi": 65350.080446044594,
+            "win_rate": 0.99
+          },
+          "poach_to_spill": {
+            "mean_diff": 51737.21802531159,
+            "ci": 4656.685771437775,
+            "lo": 47080.53225387381,
+            "hi": 56393.903796749364,
+            "win_rate": 0.985
+          },
+          "spill_parasite": {
+            "mean_diff": 26546.09129128894,
+            "ci": 2706.888818295543,
+            "lo": 23839.2024729934,
+            "hi": 29252.98010958448,
+            "win_rate": 0.98
+          },
+          "random": {
+            "mean_diff": 52285.60445497232,
+            "ci": 4670.125126329955,
+            "lo": 47615.47932864237,
+            "hi": 56955.72958130228,
+            "win_rate": 0.98
+          }
+        }
+      },
+      "gap_closed": {
+        "point": 1.4906449564818909,
+        "lo": 1.410166333134118,
+        "hi": 1.5850509431935174
+      },
+      "gap_closed_hold": {
+        "point": 1.2117807400680831,
+        "lo": 1.1830814172327446,
+        "hi": 1.2423442962961746
+      },
+      "criteria": {
+        "P1": true,
+        "P2_pass": true,
+        "P2_strong": true,
+        "P2_stretch": true,
+        "P3": true,
+        "H1": true,
+        "H2a": true,
+        "H2b": true,
+        "H2c": false,
+        "H2": false
+      },
+      "ratios": {
+        "ppo_over_bench_default": 1.119093279193332,
+        "ppo_over_bench_heldout": 1.0428092945765746
+      },
+      "B1": {
+        "mean_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sampled_action_at_bound": [
+          0.0,
+          0.0008333333333333334,
+          0.013333333333333334
+        ],
+        "sampled_policy_mean_net_worth": 34805.366537471964,
+        "pass": true
+      },
+      "B2": {
+        "share_episodes_hiring_late": 1.0,
+        "mean_cost_of_late_hiring": 113.1271634504803,
+        "ci": 39.80501950799672
+      },
+      "audit_default": {
+        "mean_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "wage_vs_market": {
+          "p5": 0.9489218172865684,
+          "p50": 0.992123054482888,
+          "p95": 1.0614321540940754,
+          "histogram_edges": [
+            0.875,
+            0.9,
+            0.925,
+            0.95,
+            0.975,
+            1.0,
+            1.025,
+            1.05,
+            1.075,
+            1.1,
+            1.125,
+            1.15,
+            1.175,
+            1.2,
+            1.225
+          ],
+          "histogram_counts": [
+            0,
+            0,
+            319,
+            1166,
+            2172,
+            1592,
+            349,
+            167,
+            57,
+            178,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "price_set": {
+          "p5": 10.408197107058163,
+          "p50": 11.28828445609217,
+          "p95": 11.992619156297737
+        },
+        "hiring_by_step": {
+          "1": {
+            "mean_hire_request": -1,
+            "mean_workers": 3.69
+          },
+          "2": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.665
+          },
+          "3": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.665
+          },
+          "4": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.64
+          },
+          "5": {
+            "mean_hire_request": 1,
+            "mean_workers": 7.505
+          },
+          "6": {
+            "mean_hire_request": 1,
+            "mean_workers": 7.765
+          },
+          "7": {
+            "mean_hire_request": 1.005,
+            "mean_workers": 7.7
+          },
+          "8": {
+            "mean_hire_request": 1.01,
+            "mean_workers": 7.365
+          },
+          "9": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.785
+          },
+          "10": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 6.265
+          },
+          "11": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 5.895
+          },
+          "12": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.635
+          },
+          "13": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 5.51
+          },
+          "14": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.375
+          },
+          "15": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.34
+          },
+          "16": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.305
+          },
+          "17": {
+            "mean_hire_request": 1.005,
+            "mean_workers": 5.265
+          },
+          "18": {
+            "mean_hire_request": 1.005,
+            "mean_workers": 5.205
+          },
+          "19": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 5.11
+          },
+          "20": {
+            "mean_hire_request": 1.005,
+            "mean_workers": 4.955
+          },
+          "21": {
+            "mean_hire_request": 1.005,
+            "mean_workers": 4.87
+          },
+          "22": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.78
+          },
+          "23": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.695
+          },
+          "24": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 4.665
+          },
+          "25": {
+            "mean_hire_request": 1.005,
+            "mean_workers": 4.49
+          },
+          "26": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 4.395
+          },
+          "27": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 4.245
+          },
+          "28": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.165
+          },
+          "29": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 4.11
+          },
+          "30": {
+            "mean_hire_request": 1,
+            "mean_workers": 3.945
+          }
+        },
+        "worst_episodes": [
+          [
+            10014,
+            27209
+          ],
+          [
+            10022,
+            28425
+          ],
+          [
+            10000,
+            29677
+          ]
+        ],
+        "best_episodes": [
+          [
+            10095,
+            46686
+          ],
+          [
+            10155,
+            47305
+          ],
+          [
+            10116,
+            47853
+          ]
+        ],
+        "corr_return_networth": 0.9999999999999998,
+        "max_telescoping_residual": 1.3322676295501878e-15
+      },
+      "audit_heldout": {
+        "mean_action_at_bound": [
+          0.0,
+          0.010607356715141146,
+          0.0
+        ],
+        "wage_vs_market": {
+          "p5": 0.9874261390645575,
+          "p50": 1.0,
+          "p95": 1.040358707701499,
+          "histogram_edges": [
+            0.875,
+            0.9,
+            0.925,
+            0.95,
+            0.975,
+            1.0,
+            1.025,
+            1.05,
+            1.075,
+            1.1,
+            1.125,
+            1.15,
+            1.175,
+            1.2,
+            1.225
+          ],
+          "histogram_counts": [
+            15,
+            40,
+            136,
+            49,
+            55,
+            5149,
+            125,
+            117,
+            42,
+            28,
+            15,
+            13,
+            1,
+            0
+          ]
+        },
+        "price_set": {
+          "p5": 6.4004935515091335,
+          "p50": 10.941598545348155,
+          "p95": 13.274577722580824
+        },
+        "hiring_by_step": {
+          "1": {
+            "mean_hire_request": -1,
+            "mean_workers": 3.72
+          },
+          "2": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.705
+          },
+          "3": {
+            "mean_hire_request": 0.99,
+            "mean_workers": 5.435
+          },
+          "4": {
+            "mean_hire_request": 1.04,
+            "mean_workers": 5.845
+          },
+          "5": {
+            "mean_hire_request": 1.08,
+            "mean_workers": 6.1
+          },
+          "6": {
+            "mean_hire_request": 1.155,
+            "mean_workers": 6.475
+          },
+          "7": {
+            "mean_hire_request": 1.205,
+            "mean_workers": 7.01
+          },
+          "8": {
+            "mean_hire_request": 1.25,
+            "mean_workers": 7.505
+          },
+          "9": {
+            "mean_hire_request": 1.295,
+            "mean_workers": 8.035
+          },
+          "10": {
+            "mean_hire_request": 1.285,
+            "mean_workers": 8.44
+          },
+          "11": {
+            "mean_hire_request": 1.31,
+            "mean_workers": 8.765
+          },
+          "12": {
+            "mean_hire_request": 1.27,
+            "mean_workers": 8.93
+          },
+          "13": {
+            "mean_hire_request": 1.225,
+            "mean_workers": 8.91
+          },
+          "14": {
+            "mean_hire_request": 1.18,
+            "mean_workers": 8.895
+          },
+          "15": {
+            "mean_hire_request": 1.115,
+            "mean_workers": 8.86
+          },
+          "16": {
+            "mean_hire_request": 1.1155778894472361,
+            "mean_workers": 8.924623115577889
+          },
+          "17": {
+            "mean_hire_request": 1.0612244897959184,
+            "mean_workers": 8.821428571428571
+          },
+          "18": {
+            "mean_hire_request": 0.9487179487179487,
+            "mean_workers": 8.794871794871796
+          },
+          "19": {
+            "mean_hire_request": 0.8923076923076924,
+            "mean_workers": 8.825641025641026
+          },
+          "20": {
+            "mean_hire_request": 0.8350515463917526,
+            "mean_workers": 8.721649484536082
+          },
+          "21": {
+            "mean_hire_request": 0.7668393782383419,
+            "mean_workers": 8.606217616580311
+          },
+          "22": {
+            "mean_hire_request": 0.75,
+            "mean_workers": 8.604166666666666
+          },
+          "23": {
+            "mean_hire_request": 0.75,
+            "mean_workers": 8.404255319148936
+          },
+          "24": {
+            "mean_hire_request": 0.6382978723404256,
+            "mean_workers": 8.367021276595745
+          },
+          "25": {
+            "mean_hire_request": 0.6363636363636364,
+            "mean_workers": 8.197860962566844
+          },
+          "26": {
+            "mean_hire_request": 0.6108108108108108,
+            "mean_workers": 8.037837837837838
+          },
+          "27": {
+            "mean_hire_request": 0.6054054054054054,
+            "mean_workers": 8.005405405405405
+          },
+          "28": {
+            "mean_hire_request": 0.5459459459459459,
+            "mean_workers": 7.972972972972973
+          },
+          "29": {
+            "mean_hire_request": 0.5274725274725275,
+            "mean_workers": 7.631868131868132
+          },
+          "30": {
+            "mean_hire_request": 0.5414364640883977,
+            "mean_workers": 7.480662983425415
+          }
+        },
+        "worst_episodes": [
+          [
+            20006,
+            -11784
+          ],
+          [
+            20032,
+            -11434
+          ],
+          [
+            20177,
+            -11342
+          ]
+        ],
+        "best_episodes": [
+          [
+            20041,
+            132667
+          ],
+          [
+            20137,
+            137721
+          ],
+          [
+            20184,
+            139379
+          ]
+        ],
+        "corr_return_networth": 0.9999938547991867,
+        "max_telescoping_residual": 5.329070518200751e-15
+      }
+    },
+    "4": {
+      "best_val_net_worth": 41063.64886022287,
+      "best_step": 655360,
+      "parity": {
+        "n_obs": 1000,
+        "max_abs_diff_raw_mean": 2.823904126092458e-07,
+        "max_abs_diff_squashed": 1.2210218702790598e-07
+      },
+      "default": {
+        "mean": 40309.06009764545,
+        "ci": 504.8028846169154,
+        "bankrupt": 0,
+        "vs": {
+          "rule_based": {
+            "mean_diff": 6525.805030296653,
+            "ci": 458.9040737636007,
+            "lo": 6066.9009565330525,
+            "hi": 6984.709104060254,
+            "win_rate": 0.98
+          },
+          "hold": {
+            "mean_diff": 25523.560097645455,
+            "ci": 502.83253327753687,
+            "lo": 25020.727564367917,
+            "hi": 26026.392630922994,
+            "win_rate": 1.0
+          },
+          "market+eps": {
+            "mean_diff": 14725.947668354735,
+            "ci": 617.2202078803778,
+            "lo": 14108.727460474356,
+            "hi": 15343.167876235113,
+            "win_rate": 1.0
+          },
+          "always_floor": {
+            "mean_diff": 28086.545760145455,
+            "ci": 506.0276332114827,
+            "lo": 27580.518126933974,
+            "hi": 28592.573393356935,
+            "win_rate": 1.0
+          },
+          "always_max": {
+            "mean_diff": 54303.72007615637,
+            "ci": 662.5132173243444,
+            "lo": 53641.206858832025,
+            "hi": 54966.23329348072,
+            "win_rate": 1.0
+          },
+          "poach_to_spill": {
+            "mean_diff": 51222.369556384896,
+            "ci": 514.3134762869067,
+            "lo": 50708.05608009799,
+            "hi": 51736.683032671805,
+            "win_rate": 1.0
+          },
+          "spill_parasite": {
+            "mean_diff": 22723.56426057652,
+            "ci": 496.59057061116107,
+            "lo": 22226.973689965358,
+            "hi": 23220.154831187683,
+            "win_rate": 1.0
+          },
+          "random": {
+            "mean_diff": 37646.1448869567,
+            "ci": 1209.7678626486836,
+            "lo": 36436.37702430802,
+            "hi": 38855.912749605384,
+            "win_rate": 1.0
+          }
+        }
+      },
+      "heldout": {
+        "mean": 51762.23305694943,
+        "ci": 5227.571789878713,
+        "bankrupt": 0,
+        "vs": {
+          "rule_based": {
+            "mean_diff": 8038.511339526321,
+            "ci": 970.5020476549493,
+            "lo": 7068.009291871372,
+            "hi": 9009.01338718127,
+            "win_rate": 0.94
+          },
+          "hold": {
+            "mean_diff": 33625.27617177815,
+            "ci": 3553.535753082082,
+            "lo": 30071.740418696063,
+            "hi": 37178.81192486023,
+            "win_rate": 0.995
+          },
+          "market+eps": {
+            "mean_diff": 41662.709024732016,
+            "ci": 2447.5479929956173,
+            "lo": 39215.161031736396,
+            "hi": 44110.257017727636,
+            "win_rate": 1.0
+          },
+          "always_floor": {
+            "mean_diff": 40269.26319171237,
+            "ci": 5015.7776349884125,
+            "lo": 35253.48555672396,
+            "hi": 45285.04082670079,
+            "win_rate": 0.88
+          },
+          "always_max": {
+            "mean_diff": 65959.30053586133,
+            "ci": 5349.257188809616,
+            "lo": 60610.04334705172,
+            "hi": 71308.55772467094,
+            "win_rate": 1.0
+          },
+          "poach_to_spill": {
+            "mean_diff": 57903.94768185257,
+            "ci": 4430.407024983951,
+            "lo": 53473.54065686862,
+            "hi": 62334.35470683652,
+            "win_rate": 1.0
+          },
+          "spill_parasite": {
+            "mean_diff": 32712.820947829925,
+            "ci": 2350.703335348329,
+            "lo": 30362.117612481597,
+            "hi": 35063.52428317825,
+            "win_rate": 0.995
+          },
+          "random": {
+            "mean_diff": 58452.33411151331,
+            "ci": 4503.000918040743,
+            "lo": 53949.333193472565,
+            "hi": 62955.33502955405,
+            "win_rate": 1.0
+          }
+        }
+      },
+      "gap_closed": {
+        "point": 1.7958160386149158,
+        "lo": 1.6964271355601928,
+        "hi": 1.9084756622952868
+      },
+      "gap_closed_hold": {
+        "point": 1.343504009140136,
+        "lo": 1.311505094511783,
+        "hi": 1.3762954977101054
+      },
+      "criteria": {
+        "P1": true,
+        "P2_pass": true,
+        "P2_strong": true,
+        "P2_stretch": true,
+        "P3": true,
+        "H1": true,
+        "H2a": true,
+        "H2b": true,
+        "H2c": true,
+        "H2": true
+      },
+      "ratios": {
+        "ppo_over_bench_default": 1.1931668519592649,
+        "ppo_over_bench_heldout": 1.1838478295941381
+      },
+      "B1": {
+        "mean_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sampled_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "sampled_policy_mean_net_worth": 37007.029545456906,
+        "pass": true
+      },
+      "B2": {
+        "share_episodes_hiring_late": 1.0,
+        "mean_cost_of_late_hiring": 102.48859086777662,
+        "ci": 33.550770975533425
+      },
+      "audit_default": {
+        "mean_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "wage_vs_market": {
+          "p5": 0.9589757996506636,
+          "p50": 0.9912312288349328,
+          "p95": 1.0360720880205763,
+          "histogram_edges": [
+            0.875,
+            0.9,
+            0.925,
+            0.95,
+            0.975,
+            1.0,
+            1.025,
+            1.05,
+            1.075,
+            1.1,
+            1.125,
+            1.15,
+            1.175,
+            1.2,
+            1.225
+          ],
+          "histogram_counts": [
+            0,
+            0,
+            106,
+            1104,
+            2763,
+            1556,
+            290,
+            98,
+            82,
+            1,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "price_set": {
+          "p5": 10.045082627631917,
+          "p50": 10.94343933278701,
+          "p95": 11.634139520859568
+        },
+        "hiring_by_step": {
+          "1": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.99
+          },
+          "2": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.81
+          },
+          "3": {
+            "mean_hire_request": 1.985,
+            "mean_workers": 8.77
+          },
+          "4": {
+            "mean_hire_request": 2,
+            "mean_workers": 9.88
+          },
+          "5": {
+            "mean_hire_request": 2,
+            "mean_workers": 9.925
+          },
+          "6": {
+            "mean_hire_request": 1.98,
+            "mean_workers": 9.165
+          },
+          "7": {
+            "mean_hire_request": 1.95,
+            "mean_workers": 8.42
+          },
+          "8": {
+            "mean_hire_request": 1.825,
+            "mean_workers": 7.965
+          },
+          "9": {
+            "mean_hire_request": 1.625,
+            "mean_workers": 7.66
+          },
+          "10": {
+            "mean_hire_request": 1.555,
+            "mean_workers": 7.375
+          },
+          "11": {
+            "mean_hire_request": 1.42,
+            "mean_workers": 7.115
+          },
+          "12": {
+            "mean_hire_request": 1.225,
+            "mean_workers": 7.005
+          },
+          "13": {
+            "mean_hire_request": 1.14,
+            "mean_workers": 6.865
+          },
+          "14": {
+            "mean_hire_request": 1.11,
+            "mean_workers": 6.735
+          },
+          "15": {
+            "mean_hire_request": 1.075,
+            "mean_workers": 6.74
+          },
+          "16": {
+            "mean_hire_request": 1.025,
+            "mean_workers": 6.69
+          },
+          "17": {
+            "mean_hire_request": 1.045,
+            "mean_workers": 6.6
+          },
+          "18": {
+            "mean_hire_request": 1.03,
+            "mean_workers": 6.47
+          },
+          "19": {
+            "mean_hire_request": 1.025,
+            "mean_workers": 6.44
+          },
+          "20": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.235
+          },
+          "21": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.085
+          },
+          "22": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.89
+          },
+          "23": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.715
+          },
+          "24": {
+            "mean_hire_request": 1.005,
+            "mean_workers": 5.58
+          },
+          "25": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.375
+          },
+          "26": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.15
+          },
+          "27": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.935
+          },
+          "28": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.775
+          },
+          "29": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.47
+          },
+          "30": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.24
+          }
+        },
+        "worst_episodes": [
+          [
+            10022,
+            30492
+          ],
+          [
+            10070,
+            31614
+          ],
+          [
+            10026,
+            32091
+          ]
+        ],
+        "best_episodes": [
+          [
+            10095,
+            48137
+          ],
+          [
+            10018,
+            48498
+          ],
+          [
+            10116,
+            50377
+          ]
+        ],
+        "corr_return_networth": 0.9999999999999997,
+        "max_telescoping_residual": 1.3322676295501878e-15
+      },
+      "audit_heldout": {
+        "mean_action_at_bound": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "wage_vs_market": {
+          "p5": 0.9932957529412094,
+          "p50": 1.0,
+          "p95": 1.0,
+          "histogram_edges": [
+            0.875,
+            0.9,
+            0.925,
+            0.95,
+            0.975,
+            1.0,
+            1.025,
+            1.05,
+            1.075,
+            1.1,
+            1.125,
+            1.15,
+            1.175,
+            1.2,
+            1.225
+          ],
+          "histogram_counts": [
+            12,
+            19,
+            69,
+            25,
+            135,
+            5451,
+            57,
+            74,
+            38,
+            7,
+            17,
+            16,
+            3,
+            0
+          ]
+        },
+        "price_set": {
+          "p5": 6.5226167296139375,
+          "p50": 9.553384261334998,
+          "p95": 12.38192041287883
+        },
+        "hiring_by_step": {
+          "1": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.975
+          },
+          "2": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.975
+          },
+          "3": {
+            "mean_hire_request": 1.14,
+            "mean_workers": 8.04
+          },
+          "4": {
+            "mean_hire_request": 1.21,
+            "mean_workers": 9.09
+          },
+          "5": {
+            "mean_hire_request": 1.285,
+            "mean_workers": 10.05
+          },
+          "6": {
+            "mean_hire_request": 1.37,
+            "mean_workers": 10.965
+          },
+          "7": {
+            "mean_hire_request": 1.395,
+            "mean_workers": 11.915
+          },
+          "8": {
+            "mean_hire_request": 1.355,
+            "mean_workers": 12.7
+          },
+          "9": {
+            "mean_hire_request": 1.24,
+            "mean_workers": 13.105
+          },
+          "10": {
+            "mean_hire_request": 1.235,
+            "mean_workers": 13.175
+          },
+          "11": {
+            "mean_hire_request": 1.155,
+            "mean_workers": 13.03
+          },
+          "12": {
+            "mean_hire_request": 1.17,
+            "mean_workers": 12.89
+          },
+          "13": {
+            "mean_hire_request": 1.175,
+            "mean_workers": 12.77
+          },
+          "14": {
+            "mean_hire_request": 1.12,
+            "mean_workers": 12.605
+          },
+          "15": {
+            "mean_hire_request": 1.05,
+            "mean_workers": 12.425
+          },
+          "16": {
+            "mean_hire_request": 1.065,
+            "mean_workers": 12.39
+          },
+          "17": {
+            "mean_hire_request": 0.965,
+            "mean_workers": 12.205
+          },
+          "18": {
+            "mean_hire_request": 0.91,
+            "mean_workers": 12.12
+          },
+          "19": {
+            "mean_hire_request": 0.77,
+            "mean_workers": 11.815
+          },
+          "20": {
+            "mean_hire_request": 0.785,
+            "mean_workers": 11.59
+          },
+          "21": {
+            "mean_hire_request": 0.695,
+            "mean_workers": 11.295
+          },
+          "22": {
+            "mean_hire_request": 0.7,
+            "mean_workers": 11.07
+          },
+          "23": {
+            "mean_hire_request": 0.665,
+            "mean_workers": 10.895
+          },
+          "24": {
+            "mean_hire_request": 0.57,
+            "mean_workers": 10.645
+          },
+          "25": {
+            "mean_hire_request": 0.525,
+            "mean_workers": 10.29
+          },
+          "26": {
+            "mean_hire_request": 0.49,
+            "mean_workers": 9.99
+          },
+          "27": {
+            "mean_hire_request": 0.44,
+            "mean_workers": 9.695
+          },
+          "28": {
+            "mean_hire_request": 0.375,
+            "mean_workers": 9.45
+          },
+          "29": {
+            "mean_hire_request": 0.32,
+            "mean_workers": 9.09
+          },
+          "30": {
+            "mean_hire_request": 0.315,
+            "mean_workers": 8.74
+          }
+        },
+        "worst_episodes": [
+          [
+            20067,
+            828
+          ],
+          [
+            20122,
+            947
+          ],
+          [
+            20125,
+            1308
+          ]
+        ],
+        "best_episodes": [
+          [
+            20041,
+            136780
+          ],
+          [
+            20137,
+            140263
+          ],
+          [
+            20184,
+            143479
+          ]
+        ],
+        "corr_return_networth": 0.9999999851047783,
+        "max_telescoping_residual": 3.552713678800501e-15
+      }
+    },
+    "5": {
+      "best_val_net_worth": 39431.71049141901,
+      "best_step": 696320,
+      "parity": {
+        "n_obs": 1000,
+        "max_abs_diff_raw_mean": 5.303196894956841e-07,
+        "max_abs_diff_squashed": 1.7335893140457692e-07
+      },
+      "default": {
+        "mean": 38721.543215300044,
+        "ci": 545.8413034041475,
+        "bankrupt": 0,
+        "vs": {
+          "rule_based": {
+            "mean_diff": 4938.288147951245,
+            "ci": 471.8664457497075,
+            "lo": 4466.421702201538,
+            "hi": 5410.154593700952,
+            "win_rate": 0.94
+          },
+          "hold": {
+            "mean_diff": 23936.043215300047,
+            "ci": 543.6890700149081,
+            "lo": 23392.35414528514,
+            "hi": 24479.732285314956,
+            "win_rate": 1.0
+          },
+          "market+eps": {
+            "mean_diff": 13138.430786009327,
+            "ci": 624.3271237845314,
+            "lo": 12514.103662224796,
+            "hi": 13762.757909793858,
+            "win_rate": 1.0
+          },
+          "always_floor": {
+            "mean_diff": 26499.028877800047,
+            "ci": 544.0749037348144,
+            "lo": 25954.953974065233,
+            "hi": 27043.10378153486,
+            "win_rate": 1.0
+          },
+          "always_max": {
+            "mean_diff": 52716.203193810965,
+            "ci": 712.2588300889549,
+            "lo": 52003.94436372201,
+            "hi": 53428.46202389992,
+            "win_rate": 1.0
+          },
+          "poach_to_spill": {
+            "mean_diff": 49634.85267403949,
+            "ci": 565.164427361903,
+            "lo": 49069.688246677586,
+            "hi": 50200.01710140139,
+            "win_rate": 1.0
+          },
+          "spill_parasite": {
+            "mean_diff": 21136.047378231113,
+            "ci": 541.4373645121175,
+            "lo": 20594.610013718997,
+            "hi": 21677.48474274323,
+            "win_rate": 1.0
+          },
+          "random": {
+            "mean_diff": 36058.628004611295,
+            "ci": 1201.874713286499,
+            "lo": 34856.7532913248,
+            "hi": 37260.50271789779,
+            "win_rate": 1.0
+          }
+        }
+      },
+      "heldout": {
+        "mean": 55198.759849897884,
+        "ci": 5741.800087928186,
+        "bankrupt": 0,
+        "vs": {
+          "rule_based": {
+            "mean_diff": 11475.03813247477,
+            "ci": 1464.2592170503133,
+            "lo": 10010.778915424456,
+            "hi": 12939.297349525084,
+            "win_rate": 0.95
+          },
+          "hold": {
+            "mean_diff": 37061.802964726594,
+            "ci": 4301.848600030116,
+            "lo": 32759.954364696478,
+            "hi": 41363.651564756714,
+            "win_rate": 0.995
+          },
+          "market+eps": {
+            "mean_diff": 45099.23581768047,
+            "ci": 2835.843295848673,
+            "lo": 42263.392521831796,
+            "hi": 47935.079113529144,
+            "win_rate": 1.0
+          },
+          "always_floor": {
+            "mean_diff": 43705.78998466082,
+            "ci": 5580.321128885844,
+            "lo": 38125.468855774976,
+            "hi": 49286.11111354666,
+            "win_rate": 0.955
+          },
+          "always_max": {
+            "mean_diff": 69395.82732880978,
+            "ci": 5860.755323386216,
+            "lo": 63535.07200542357,
+            "hi": 75256.582652196,
+            "win_rate": 1.0
+          },
+          "poach_to_spill": {
+            "mean_diff": 61340.47447480102,
+            "ci": 4828.402158333078,
+            "lo": 56512.072316467944,
+            "hi": 66168.8766331341,
+            "win_rate": 1.0
+          },
+          "spill_parasite": {
+            "mean_diff": 36149.34774077837,
+            "ci": 2864.1170622687077,
+            "lo": 33285.230678509666,
+            "hi": 39013.46480304708,
+            "win_rate": 1.0
+          },
+          "random": {
+            "mean_diff": 61888.86090446176,
+            "ci": 4980.142794058369,
+            "lo": 56908.718110403395,
+            "hi": 66869.00369852013,
+            "win_rate": 1.0
+          }
+        }
+      },
+      "gap_closed": {
+        "point": 1.602219786401264,
+        "lo": 1.5153347887275703,
+        "hi": 1.6999903379974384
+      },
+      "gap_closed_hold": {
+        "point": 1.2599406156382449,
+        "lo": 1.2305089547414982,
+        "hi": 1.2914339931385352
+      },
+      "criteria": {
+        "P1": true,
+        "P2_pass": true,
+        "P2_strong": true,
+        "P2_stretch": true,
+        "P3": true,
+        "H1": true,
+        "H2a": true,
+        "H2b": true,
+        "H2c": true,
+        "H2": true
+      },
+      "ratios": {
+        "ppo_over_bench_default": 1.1461756168287067,
+        "ppo_over_bench_heldout": 1.2624442220777876
+      },
+      "B1": {
+        "mean_action_at_bound": [
+          0.0,
+          0.03333333333333333,
+          0.0
+        ],
+        "sampled_action_at_bound": [
+          0.0,
+          0.029666666666666668,
+          0.0
+        ],
+        "sampled_policy_mean_net_worth": 36001.218427763604,
+        "pass": true
+      },
+      "B2": {
+        "share_episodes_hiring_late": 0.995,
+        "mean_cost_of_late_hiring": 76.38083601311027,
+        "ci": 26.85995899472831
+      },
+      "audit_default": {
+        "mean_action_at_bound": [
+          0.0,
+          0.03333333333333333,
+          0.0
+        ],
+        "wage_vs_market": {
+          "p5": 0.9479607765442718,
+          "p50": 0.9908311106282234,
+          "p95": 1.0657841378244106,
+          "histogram_edges": [
+            0.875,
+            0.9,
+            0.925,
+            0.95,
+            0.975,
+            1.0,
+            1.025,
+            1.05,
+            1.075,
+            1.1,
+            1.125,
+            1.15,
+            1.175,
+            1.2,
+            1.225
+          ],
+          "histogram_counts": [
+            0,
+            204,
+            120,
+            1192,
+            2228,
+            1608,
+            279,
+            113,
+            107,
+            148,
+            1,
+            0,
+            0,
+            0
+          ]
+        },
+        "price_set": {
+          "p5": 10.270945977490282,
+          "p50": 11.220598306972338,
+          "p95": 11.691106613685678
+        },
+        "hiring_by_step": {
+          "1": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.84
+          },
+          "2": {
+            "mean_hire_request": 1.405,
+            "mean_workers": 5.9
+          },
+          "3": {
+            "mean_hire_request": 1.42,
+            "mean_workers": 7.31
+          },
+          "4": {
+            "mean_hire_request": 1.985,
+            "mean_workers": 8.735
+          },
+          "5": {
+            "mean_hire_request": 1.97,
+            "mean_workers": 9.32
+          },
+          "6": {
+            "mean_hire_request": 1.845,
+            "mean_workers": 8.57
+          },
+          "7": {
+            "mean_hire_request": 1.545,
+            "mean_workers": 8.11
+          },
+          "8": {
+            "mean_hire_request": 1.35,
+            "mean_workers": 7.39
+          },
+          "9": {
+            "mean_hire_request": 1.095,
+            "mean_workers": 6.855
+          },
+          "10": {
+            "mean_hire_request": 1.02,
+            "mean_workers": 6.55
+          },
+          "11": {
+            "mean_hire_request": 1,
+            "mean_workers": 6.165
+          },
+          "12": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.82
+          },
+          "13": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.72
+          },
+          "14": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.575
+          },
+          "15": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.54
+          },
+          "16": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.51
+          },
+          "17": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.485
+          },
+          "18": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.425
+          },
+          "19": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 5.385
+          },
+          "20": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.25
+          },
+          "21": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 5.18
+          },
+          "22": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 5.02
+          },
+          "23": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.99
+          },
+          "24": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 4.865
+          },
+          "25": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.75
+          },
+          "26": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 4.655
+          },
+          "27": {
+            "mean_hire_request": 1,
+            "mean_workers": 4.52
+          },
+          "28": {
+            "mean_hire_request": 0.98,
+            "mean_workers": 4.38
+          },
+          "29": {
+            "mean_hire_request": 0.99,
+            "mean_workers": 4.21
+          },
+          "30": {
+            "mean_hire_request": 0.995,
+            "mean_workers": 4.095
+          }
+        },
+        "worst_episodes": [
+          [
+            10022,
+            28576
+          ],
+          [
+            10131,
+            28914
+          ],
+          [
+            10000,
+            30408
+          ]
+        ],
+        "best_episodes": [
+          [
+            10010,
+            46694
+          ],
+          [
+            10116,
+            47450
+          ],
+          [
+            10016,
+            47685
+          ]
+        ],
+        "corr_return_networth": 1.0,
+        "max_telescoping_residual": 1.3322676295501878e-15
+      },
+      "audit_heldout": {
+        "mean_action_at_bound": [
+          0.0,
+          0.039,
+          0.0
+        ],
+        "wage_vs_market": {
+          "p5": 1.0,
+          "p50": 1.0,
+          "p95": 1.0016030118192378,
+          "histogram_edges": [
+            0.875,
+            0.9,
+            0.925,
+            0.95,
+            0.975,
+            1.0,
+            1.025,
+            1.05,
+            1.075,
+            1.1,
+            1.125,
+            1.15,
+            1.175,
+            1.2,
+            1.225
+          ],
+          "histogram_counts": [
+            9,
+            168,
+            40,
+            32,
+            26,
+            5477,
+            27,
+            31,
+            59,
+            64,
+            9,
+            15,
+            3,
+            2
+          ]
+        },
+        "price_set": {
+          "p5": 6.595448055858769,
+          "p50": 10.16587814124377,
+          "p95": 12.438169926889051
+        },
+        "hiring_by_step": {
+          "1": {
+            "mean_hire_request": 1,
+            "mean_workers": 5.315
+          },
+          "2": {
+            "mean_hire_request": 1.06,
+            "mean_workers": 6.34
+          },
+          "3": {
+            "mean_hire_request": 1.17,
+            "mean_workers": 7.3
+          },
+          "4": {
+            "mean_hire_request": 1.44,
+            "mean_workers": 8.115
+          },
+          "5": {
+            "mean_hire_request": 1.52,
+            "mean_workers": 8.76
+          },
+          "6": {
+            "mean_hire_request": 1.665,
+            "mean_workers": 9.56
+          },
+          "7": {
+            "mean_hire_request": 1.575,
+            "mean_workers": 10.355
+          },
+          "8": {
+            "mean_hire_request": 1.425,
+            "mean_workers": 10.945
+          },
+          "9": {
+            "mean_hire_request": 1.39,
+            "mean_workers": 11.235
+          },
+          "10": {
+            "mean_hire_request": 1.33,
+            "mean_workers": 11.24
+          },
+          "11": {
+            "mean_hire_request": 1.275,
+            "mean_workers": 11.285
+          },
+          "12": {
+            "mean_hire_request": 1.32,
+            "mean_workers": 11.245
+          },
+          "13": {
+            "mean_hire_request": 1.31,
+            "mean_workers": 11.145
+          },
+          "14": {
+            "mean_hire_request": 1.245,
+            "mean_workers": 11.165
+          },
+          "15": {
+            "mean_hire_request": 1.24,
+            "mean_workers": 11.17
+          },
+          "16": {
+            "mean_hire_request": 1.21,
+            "mean_workers": 11.08
+          },
+          "17": {
+            "mean_hire_request": 1.135,
+            "mean_workers": 10.96
+          },
+          "18": {
+            "mean_hire_request": 1.06,
+            "mean_workers": 10.88
+          },
+          "19": {
+            "mean_hire_request": 1.01,
+            "mean_workers": 10.715
+          },
+          "20": {
+            "mean_hire_request": 0.955,
+            "mean_workers": 10.58
+          },
+          "21": {
+            "mean_hire_request": 0.905,
+            "mean_workers": 10.385
+          },
+          "22": {
+            "mean_hire_request": 0.89,
+            "mean_workers": 10.27
+          },
+          "23": {
+            "mean_hire_request": 0.865,
+            "mean_workers": 10.165
+          },
+          "24": {
+            "mean_hire_request": 0.78,
+            "mean_workers": 10.04
+          },
+          "25": {
+            "mean_hire_request": 0.735,
+            "mean_workers": 9.91
+          },
+          "26": {
+            "mean_hire_request": 0.69,
+            "mean_workers": 9.69
+          },
+          "27": {
+            "mean_hire_request": 0.595,
+            "mean_workers": 9.555
+          },
+          "28": {
+            "mean_hire_request": 0.515,
+            "mean_workers": 9.25
+          },
+          "29": {
+            "mean_hire_request": 0.44,
+            "mean_workers": 9.09
+          },
+          "30": {
+            "mean_hire_request": 0.395,
+            "mean_workers": 8.925
+          }
+        },
+        "worst_episodes": [
+          [
+            20006,
+            2672
+          ],
+          [
+            20188,
+            4364
+          ],
+          [
+            20022,
+            4845
+          ]
+        ],
+        "best_episodes": [
+          [
+            20041,
+            160983
+          ],
+          [
+            20137,
+            169420
+          ],
+          [
+            20184,
+            174190
+          ]
+        ],
+        "corr_return_networth": 1.0,
+        "max_telescoping_residual": 5.329070518200751e-15
+      }
+    }
+  },
+  "scripted": {
+    "default/rule_based": {
+      "mean": 33783.2550673488,
+      "ci": 631.4521320269,
+      "bankrupt": 0
+    },
+    "default/hold": {
+      "mean": 14785.5,
+      "ci": 108.36242456352862,
+      "bankrupt": 0
+    },
+    "default/market+eps": {
+      "mean": 25583.11242929072,
+      "ci": 655.0745744905383,
+      "bankrupt": 0
+    },
+    "default/always_floor": {
+      "mean": 12222.514337499999,
+      "ci": 66.86622358208501,
+      "bankrupt": 0
+    },
+    "default/always_max": {
+      "mean": -13994.659978510917,
+      "ci": 390.81770783978607,
+      "bankrupt": 1
+    },
+    "default/poach_to_spill": {
+      "mean": -10913.309458739439,
+      "ci": 408.8386375677161,
+      "bankrupt": 0.975
+    },
+    "default/spill_parasite": {
+      "mean": 17585.495837068935,
+      "ci": 191.26908547626599,
+      "bankrupt": 0
+    },
+    "default/random": {
+      "mean": 2662.9152106887495,
+      "ci": 1102.996089123158,
+      "bankrupt": 0.23
+    },
+    "heldout/rule_based": {
+      "mean": 43723.72171742311,
+      "ci": 4884.873197905239,
+      "bankrupt": 0
+    },
+    "heldout/hold": {
+      "mean": 18136.956885171287,
+      "ci": 3006.630359380665,
+      "bankrupt": 0.35
+    },
+    "heldout/market+eps": {
+      "mean": 10099.524032217416,
+      "ci": 3633.340433260878,
+      "bankrupt": 0.53
+    },
+    "heldout/always_floor": {
+      "mean": 11492.969865237059,
+      "ci": 1423.6533927677056,
+      "bankrupt": 0.11
+    },
+    "heldout/always_max": {
+      "mean": -14197.067478911897,
+      "ci": 290.1032509639086,
+      "bankrupt": 1
+    },
+    "heldout/poach_to_spill": {
+      "mean": -6141.714624903139,
+      "ci": 2253.9706384989527,
+      "bankrupt": 0.87
+    },
+    "heldout/spill_parasite": {
+      "mean": 19049.41210911951,
+      "ci": 4412.967167915671,
+      "bankrupt": 0.41
+    },
+    "heldout/random": {
+      "mean": -6690.101054563878,
+      "ci": 1322.5704233507954,
+      "bankrupt": 0.765
+    }
+  },
+  "aggregate": {
+    "R1_runs_meeting_P1_and_P3": 5,
+    "R1_pass": true,
+    "runs_meeting_P2_pass": 5,
+    "run_means": {
+      "1": 38624.09726538487,
+      "2": 37709.19031986223,
+      "3": 37806.613695144115,
+      "4": 40309.06009764545,
+      "5": 38721.543215300044
+    },
+    "spread": {
+      "min": 37709.19031986223,
+      "median": 38624.09726538487,
+      "max": 40309.06009764545,
+      "std": 1043.243643694826
+    },
+    "headline_run": 1,
+    "leaderboard_run": 4
+  }
+}

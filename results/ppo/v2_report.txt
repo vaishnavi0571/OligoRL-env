@@ -1,0 +1,66 @@
+A. Detectors -- rules v2, profile=default, validation seeds 50000..50199
+  agent             net worth    +/- bankrupt spill/units spill/demand max emp   flow NPC exit mkt wage NPC size
+  Rule-based           44,310    666       0%        1.9%         0.6%     40%  0.032     0.0%      622      5.8
+  Hold                 14,712     93       0%        0.1%         0.1%     42%  0.042     0.0%      615      7.4
+  Market + 1%          26,659    455       0%        0.2%         0.1%     41%  0.034     0.0%      629      4.4
+  Minimum wage         12,227     69       0%        0.2%         0.1%     42%  0.046     0.0%      615      7.4
+  Maximum wage        -13,743    401     100%        0.0%         0.0%     59%  0.158     0.0%      841      1.2
+  Poacher              -9,724    685      92%        0.3%         0.1%     57%  0.094     0.0%      710      1.4
+  Premium pricer       17,684    162       0%        0.1%         0.0%     44%  0.040     0.0%      617      7.5
+  Random                4,868  1,076      16%        0.7%         0.3%     40%  0.072     0.0%      610      6.9
+
+A. Detectors -- rules v2, profile=heldout, validation seeds 60000..60199
+  agent             net worth    +/- bankrupt spill/units spill/demand max emp   flow NPC exit mkt wage NPC size
+  Rule-based           48,233  4,035       0%        7.1%         0.5%     34%  0.050     4.5%      508      1.4
+  Hold                 20,059  2,830      28%        8.7%         0.6%     20%  0.048     3.1%      504      1.4
+  Market + 1%          11,863  3,667      50%        5.6%         0.5%     42%  0.135     0.0%      591      0.8
+  Minimum wage         15,165  1,419       4%        6.4%         0.5%     24%  0.052     5.1%      448      1.8
+  Maximum wage        -14,713    276     100%        4.7%         0.3%     50%  0.218     0.0%      819      0.2
+  Poacher              -6,241  2,281      88%        3.5%         0.2%     52%  0.219     0.0%      622      0.6
+  Premium pricer       21,970  4,431      38%        5.5%         0.4%     29%  0.102     0.0%      507      1.6
+  Random               -6,773  1,393      77%        4.2%         0.3%     36%  0.154     0.6%      557      1.1
+
+B. Poacher vs NPC growth (means over the first 50 validation seeds)
+  legacy: bankrupt 96%, mean bankrupt step 19.1
+    step  1: poacher workers   8.0  NPC size  5.0  poacher wage  550  NPC wage  500  (n=50)
+    step  3: poacher workers  14.0  NPC size  4.0  poacher wage  575  NPC wage  504  (n=50)
+    step  5: poacher workers  17.0  NPC size  2.8  poacher wage  591  NPC wage  528  (n=50)
+    step  7: poacher workers  17.0  NPC size  2.4  poacher wage  628  NPC wage  556  (n=50)
+    step  9: poacher workers  17.0  NPC size  2.4  poacher wage  662  NPC wage  585  (n=45)
+  v2: bankrupt 92%, mean bankrupt step 16.0
+    step  1: poacher workers   8.0  NPC size  5.0  poacher wage  550  NPC wage  500  (n=50)
+    step  3: poacher workers  14.0  NPC size  4.0  poacher wage  575  NPC wage  513  (n=50)
+    step  5: poacher workers  17.0  NPC size  2.8  poacher wage  610  NPC wage  544  (n=50)
+    step  7: poacher workers  17.0  NPC size  2.4  poacher wage  650  NPC wage  572  (n=50)
+    step  9: poacher workers  17.0  NPC size  2.0  poacher wage  684  NPC wage  597  (n=44)
+
+C. Why fixed-wage agents are drained: Hold under v2 (first 50 validation seeds)
+    step  1: workers  5.0  market wage  500  gap  0.0%  quits 0.00  poached 0.00  NPC size  5.0
+    step  3: workers  5.0  market wage  500  gap  0.0%  quits 0.00  poached 0.00  NPC size  6.2
+    step  5: workers  3.4  market wage  519  gap  3.7%  quits 0.20  poached 1.12  NPC size  6.7
+    step  7: workers  1.2  market wage  539  gap  7.1%  quits 0.04  poached 0.70  NPC size  7.2
+    step 10: workers  0.1  market wage  573  gap 12.6%  quits 0.12  poached 0.10  NPC size  7.5
+    step 15: workers  0.0  market wage  609  gap 17.9%  quits 0.00  poached 0.00  NPC size  7.5
+    step 20: workers  0.0  market wage  613  gap 18.4%  quits 0.00  poached 0.00  NPC size  7.5
+    step 30: workers  0.0  market wage  614  gap 18.5%  quits 0.00  poached 0.00  NPC size  7.5
+
+D. Viable strategies under v2 (default validation, paired vs best)
+  Rule-based                        44,633   100% of best
+  Premium pricer, wage 1.03x        44,624   100% of best   diff       -9 +/-    832
+  Rule-based, wage 1.03x            44,142    99% of best   diff     -491 +/-    656
+  Market + 1%, wage 1.03x           27,067    61% of best   diff  -17,566 +/-    858
+  Market + 1% (grow to 12)          26,561    60% of best   diff  -18,071 +/-    968
+  Hold, wage 1.03x market           22,307    50% of best   diff  -22,325 +/-    877
+  Within 10% of best: 3 -> ['Rule-based', 'Premium pricer, wage 1.03x', 'Rule-based, wage 1.03x']
+
+E. H2 stress test (validation)
+  Rule-based       default    44,310  heldout    48,233  drop  -8.9%  heldout bankrupt   0%
+  Market + 1%      default    26,659  heldout    11,863  drop +55.5%  heldout bankrupt  50%
+  Premium pricer   default    17,684  heldout    21,970  drop -24.2%  heldout bankrupt  38%
+  Hold             default    14,712  heldout    20,059  drop -36.3%  heldout bankrupt  28%
+  Rule-based on heldout subsets: harsh (>=2 price-war NPCs, n=142)    32,157  bankrupt 0% | no price-war NPCs (n=10)    87,162
+  Rule-based heldout 10th percentile    12,420 vs default 10th percentile    38,510
+
+F. Gap-closed denominators (default validation)
+  Benchmark - Hold         =    29,598 +/-   666  (reference std    671, reference bankrupt 0%)
+  Benchmark - Market + 1%  =    17,651 +/-   731  (reference std  3,282, reference bankrupt 0%)

@@ -573,6 +573,27 @@ Stops 'die early' from beating 'bleed slowly' on the leaderboard."""
 
 
 # ---------------------------------------------------------------------
+# 7e. PPO TRAINING REWARD (the leaderboard metric, made dense)
+# ---------------------------------------------------------------------
+#   r_t   = (net_worth_t - net_worth_{t-1}) / INITIAL_FIRM_CASH + hinge_t
+#   hinge = -k * max(0, 1 - runway_t / PPO_HINGE_RUNWAY_STEPS)
+#   runway_t = cash_t / wage_bill_t     (steps of payroll covered)
+#   k     = PPO_HINGE_MAX_TOTAL * (BANKRUPTCY_PENALTY / INITIAL_FIRM_CASH)
+#           / episode_length
+# With gamma = 1 the deltas telescope: the return is the final net worth
+# change (incl. the bankruptcy penalty) plus the hinge.  The hinge is zero
+# whenever cash covers a step of wages, and its worst-case total over an
+# episode is half the bankruptcy penalty, so it can never outweigh going
+# bankrupt.  The legacy composite reward is still computed for display.
+
+PPO_HINGE_RUNWAY_STEPS: float = 1.0
+"""Hinge penalty starts when cash covers less than 1 step of wages."""
+
+PPO_HINGE_MAX_TOTAL: float = 0.5
+"""Worst-case cumulative hinge, as a fraction of the bankruptcy penalty."""
+
+
+# ---------------------------------------------------------------------
 # 8.  FORMULA REFERENCE  (no code -- just documentation)
 # ---------------------------------------------------------------------
 #

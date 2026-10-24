@@ -1,0 +1,15 @@
+# Keep the image small: runtime needs the API, simulator, agents, static
+# dashboard, ppo/ (numpy inference code) and models/ only.
+.git
+.venv
+venv
+env
+__pycache__
+*.pyc
+results
+golden
+logs.txt
+*.log
+.env
+hf_deploy.py
+requirements-train.txt

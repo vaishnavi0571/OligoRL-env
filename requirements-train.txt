@@ -1,0 +1,5 @@
+# Training only (not needed by the API, dashboard or Docker image)
+torch
+stable-baselines3
+gymnasium
+matplotlib

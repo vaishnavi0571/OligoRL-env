@@ -18,3 +18,8 @@ ENV/
 # Project specific
 tmp/
 .gemini/
+
+# Training checkpoints (torch format); the numpy exports in models/ are committed
+results/**/*.zip
+# Evaluation dry run (validation-seed code check only)
+results/ppo/dryrun/

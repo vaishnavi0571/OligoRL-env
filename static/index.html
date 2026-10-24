@@ -91,7 +91,7 @@
         <div class="tile"><span class="tile-label">Cash</span><span class="tile-value" id="t-cash">$10,000</span><span class="tile-delta" id="d-cash"></span></div>
         <div class="tile"><span class="tile-label">Workers</span><span class="tile-value" id="t-workers">5</span><span class="tile-delta" id="d-workers"></span></div>
         <div class="tile"><span class="tile-label">Market share</span><span class="tile-value" id="t-share">20%</span><span class="tile-delta" id="d-share"></span></div>
-        <div class="tile"><span class="tile-label">Step reward</span><span class="tile-value" id="t-reward">–</span><span class="tile-delta" id="d-reward"></span></div>
+        <div class="tile"><span class="tile-label">Step reward (legacy composite)</span><span class="tile-value" id="t-reward">–</span><span class="tile-delta" id="d-reward"></span></div>
       </div>
 
       <div class="charts">
@@ -100,7 +100,7 @@
           <div class="chart-box"><canvas id="c-cash" aria-label="Line chart of cash by firm over time"></canvas></div>
         </figure>
         <figure class="card chart-card">
-          <figcaption><h2>Training reward</h2><p class="caption">Composite per step, and what made up the latest one</p></figcaption>
+          <figcaption><h2>Composite reward (legacy)</h2><p class="caption">Per step, and what made up the latest one. PPO trains on net worth instead.</p></figcaption>
           <div class="reward-split">
             <div class="chart-box"><canvas id="c-reward" aria-label="Line chart of reward per step"></canvas></div>
             <div class="breakdown" id="breakdown"></div>
@@ -162,14 +162,14 @@
       <div class="card-head">
         <div>
           <h2>Leaderboard</h2>
-          <p class="caption">Every agent plays the same seeds. Ranked by final net worth (cash + capital, −$10k if bankrupt) with a 95% confidence interval. Training reward shown for comparison.</p>
+          <p class="caption">Every agent plays the same seeds. Ranked by final net worth (cash + capital, −$10k if bankrupt) with a 95% confidence interval. The legacy composite reward is shown for comparison; PPO is trained on net worth.</p>
         </div>
       </div>
       <div class="table-wrap">
         <table class="board" id="board">
           <thead><tr>
             <th>#</th><th>Agent</th><th class="col-worth">Net worth</th>
-            <th>Bankrupt</th><th>Training reward</th><th>Workers at end</th><th></th>
+            <th>Bankrupt</th><th>Composite reward (legacy)</th><th>Workers at end</th><th></th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -210,7 +210,7 @@
         <div class="tile"><span class="tile-label">Workers</span><span class="tile-value" id="r-workers">–</span></div>
         <div class="tile"><span class="tile-label">Price</span><span class="tile-value" id="r-price">–</span></div>
         <div class="tile"><span class="tile-label">Wage</span><span class="tile-value" id="r-wage">–</span></div>
-        <div class="tile"><span class="tile-label">Step reward</span><span class="tile-value" id="r-reward">–</span></div>
+        <div class="tile"><span class="tile-label">Step reward (legacy composite)</span><span class="tile-value" id="r-reward">–</span></div>
       </div>
 
       <div class="replay-grid">

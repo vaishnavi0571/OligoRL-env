@@ -1,0 +1,17 @@
+Run seed 1: 300,000 steps, validating every 20,000 on 200 seeds -> results/ppo/spill_sweep/spill_0.0
+  [  20480] train return -0.445  val net worth     9,380  heldout     9,532  bankrupt   0%  at-bound sampled p/w/h 0.00/0.02/0.03  mean 0.00/0.00/0.00  std 0.54
+  [  40960] train return -0.130  val net worth    10,036  heldout    10,199  bankrupt   0%  at-bound sampled p/w/h 0.00/0.03/0.08  mean 0.00/0.00/0.00  std 0.48
+  [  61440] train return -0.075  val net worth    10,161  heldout    10,338  bankrupt   0%  at-bound sampled p/w/h 0.00/0.04/0.12  mean 0.00/0.00/0.00  std 0.44
+  [  81920] train return  0.048  val net worth    10,209  heldout    17,005  bankrupt   0%  at-bound sampled p/w/h 0.00/0.06/0.18  mean 0.00/0.03/0.00  std 0.41
+  [ 102400] train return  0.924  val net worth    41,877  heldout    36,427  bankrupt   0%  at-bound sampled p/w/h 0.00/0.11/0.08  mean 0.00/0.06/0.00  std 0.37
+  [ 122880] train return  1.704  val net worth    45,173  heldout    42,284  bankrupt   0%  at-bound sampled p/w/h 0.00/0.15/0.00  mean 0.00/0.05/0.00  std 0.32
+  [ 143360] train return  2.265  val net worth    49,127  heldout    46,097  bankrupt   0%  at-bound sampled p/w/h 0.00/0.15/0.00  mean 0.00/0.00/0.00  std 0.29
+  [ 163840] train return  2.835  val net worth    54,459  heldout    49,419  bankrupt   0%  at-bound sampled p/w/h 0.00/0.10/0.00  mean 0.00/0.00/0.00  std 0.26
+  [ 184320] train return  3.342  val net worth    58,907  heldout    53,689  bankrupt   0%  at-bound sampled p/w/h 0.00/0.07/0.00  mean 0.00/0.00/0.00  std 0.24
+  [ 204800] train return  3.761  val net worth    60,180  heldout    55,955  bankrupt   0%  at-bound sampled p/w/h 0.00/0.05/0.00  mean 0.00/0.00/0.00  std 0.22
+  [ 225280] train return  4.268  val net worth    64,022  heldout    59,214  bankrupt   0%  at-bound sampled p/w/h 0.00/0.04/0.00  mean 0.00/0.00/0.00  std 0.20
+  [ 245760] train return  4.303  val net worth    64,281  heldout    60,201  bankrupt   0%  at-bound sampled p/w/h 0.00/0.03/0.00  mean 0.00/0.00/0.00  std 0.18
+  [ 266240] train return  4.618  val net worth    66,276  heldout    60,488  bankrupt   0%  at-bound sampled p/w/h 0.00/0.02/0.00  mean 0.00/0.00/0.00  std 0.17
+  [ 286720] train return  4.748  val net worth    66,820  heldout    60,086  bankrupt   0%  at-bound sampled p/w/h 0.00/0.01/0.00  mean 0.00/0.00/0.00  std 0.16
+  [ 301056] train return  4.675  val net worth    67,147  heldout    59,928  bankrupt   0%  at-bound sampled p/w/h 0.00/0.01/0.00  mean 0.00/0.00/0.00  std 0.16
+Best validation net worth 67,147 at step 301,056

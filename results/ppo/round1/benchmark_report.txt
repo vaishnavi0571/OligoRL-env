@@ -1,0 +1,28 @@
+VALIDATION -- profile=default, seeds 50000..50199, lobbying off
+  Premium pricer       68,573 +/-    105  (std     757)  <- benchmark
+  Rule-based           66,831 +/-    701  (std   5,057)
+  Market + 1%          56,540 +/-     43  (std     313)
+  Hold                 35,500 +/-      0  (std       0)
+  Minimum wage         12,586 +/-     79  (std     567)
+  Random                2,172 +/-  1,810  (std  13,059)
+  Poacher             -10,550 +/-    513  (std   3,698)
+  Maximum wage        -13,686 +/-    400  (std   2,883)
+
+VALIDATION -- profile=heldout, seeds 60000..60199, lobbying off
+  Rule-based           66,571 +/-  2,517  (std  18,163)  <- benchmark
+  Premium pricer       62,834 +/-  1,363  (std   9,835)
+  Market + 1%          58,095 +/-  1,417  (std  10,224)
+  Hold                 35,500 +/-      0  (std       0)
+  Minimum wage         12,307 +/-     91  (std     658)
+  Random               -3,529 +/-  1,599  (std  11,537)
+  Poacher              -5,828 +/-  2,230  (std  16,088)
+  Maximum wage        -14,755 +/-    293  (std   2,113)
+
+Premium pricer vs Rule-based (paired, validation default seeds)
+  spill=0.4: pricer    68,573  rule    66,831  diff   +1,743 +/-    678  (pricer wins 72%)
+  spill=0.0: pricer    60,135  rule    55,848  diff   +4,287 +/-    757  (pricer wins 84%)
+
+Wage vs profit: fixed wage/market ratio sweeps (validation default, first 100 seeds)
+  Rule-based       0.90: 33.2k  0.95: 58.0k  0.97: 70.5k  1.00: 66.5k  1.03: 63.7k  1.05: 61.8k  1.10: 56.8k  1.15: 52.0k  1.20: 47.4k   r = -0.02
+  Premium pricer   0.90: 35.4k  0.95: 62.9k  0.97: 71.5k  1.00: 68.5k  1.03: 65.5k  1.05: 63.5k  1.10: 58.4k  1.15: 53.5k  1.20: 48.6k   r = -0.07
+  Random agent, per step: corr(wage/market, net cash flow) = -0.35  (2475 steps)
