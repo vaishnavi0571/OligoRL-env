@@ -1,9 +1,9 @@
 # OpenEnv Simulation Framework
 
 ## Overview
-OpenEnv is a highly deterministic, strictly verified macroeconomic environment designed for Reinforcement Learning (RL) agent training and Large Language Model (LLM) economic reasoning evaluation. It implements a multi-agent competitive market simulation with dynamic macroeconomic feedback loops, discrete capacity constraints, and a strongly typed, deterministic reward engine.
+OpenEnv is a seeded, reproducible macroeconomic environment for training and evaluating Reinforcement Learning (RL) agents. It simulates a competitive market of one player firm and four NPC firms that compete for customers and workers, with macroeconomic feedback loops, capacity constraints and a labor market.
 
-The environment tracks granular microeconomic variables (revenue, operational costs, capital expenditure) alongside macroeconomic indicators (real GDP, inflation/price index, Gini coefficient) and wraps them inside a strict mathematical grader designed to prevent reward hacking and volume exploitation.
+The environment tracks microeconomic variables (revenue, operating costs, wages, capital expenditure) alongside macroeconomic indicators (real GDP, price index, Gini coefficient). A rule-based reward engine scores each step and explains its score in plain text. The PPO experiment below documents the exploits an RL agent found in earlier versions of the rules, and how they were addressed.
 
 ## Architecture design
 
@@ -20,47 +20,60 @@ Pure mathematical functions capturing standard economic metrics:
 * **Gini Penalty:** O(n log n) sorted-array metric punishing extreme structural inequality.
 
 ### 3. Core State Machine (`simulator.py`)
-A single-threaded, highly structured `EconSimulator` strictly sequencing the following timeline per timestep:
-1. Parse player and NPC actions.
-2. Advance hiring and capital expenditures.
-3. Calculate wealth-driven demand multipliers.
-4. Distribute market share and capture revenue against discrete production constraints.
-5. Reallocate expenses to worker and capital pools (conserving aggregate wealth).
-6. Advance real GDP using lagged price indexing to prevent immediate inflation cancellation.
-7. Terminate upon bankruptcy.
+A single-threaded `EconSimulator` that runs each timestep in a fixed order:
+1. Validate the player's action (price, wage, hiring, capex, lobbying); NPCs set prices and wages.
+2. Labor market: firing, quits from underpaying firms, hiring from the unemployed pool, poaching (NPC headcount follows demand under the default v2 rules).
+3. Calculate the wealth-driven demand multiplier.
+4. Distribute market share and revenue, limited by each firm's production capacity.
+5. Pay wages, inputs, tax, hiring and capex; workers spend part of their income. Every dollar is accounted for (checked by the test suite), but total wealth is not constant: spending, taxes and costs leave the economy.
+6. Compute real GDP using the previous step's price index, then update the index.
+7. End the episode on bankruptcy or after the last step.
 
 ### 4. Reward Integration (`reward_integrator.py`)
 Computes weighted composite reward mapping RL policies to intended outcomes based on Difficulty Presets. Critically, it generates a real-time, rule-based Semantic Feedback string (causal reasoning text) outlining exactly *why* a numerical reward was assigned (e.g., pricing relative to competitors, capacity utilization, hiring efficiency).
 
 ### 5. Network Layer (`api.py`)
-A thin FastAPI and Pydantic wrapper exposing the environment to distributed deployment clusters securely, featuring inherent schema validation and thread safety constraints over the global simulation instance.
+A thin FastAPI and Pydantic wrapper with schema validation. Each browser session (`X-Session-Id` header) gets its own simulator, guarded by a lock; it also serves the dashboard.
 
 ## Difficulty Presets
 
-The simulator maps weights across components dynamically based on initialization presets:
-* **Easy:** Heavily weights `solvency`. Intended to instruct baseline survival algorithms.
-* **Medium:** Heavily weights `profit`. Requires agents to balance strategic underpricing for market share growth against variable labor/input costs.
-* **Hard:** Heavily weights `gdp`. Forces agents to cooperatively manage aggregate economic wealth to spark macroeconomic feedback multipliers.
+Each preset sets the composite reward weights (positive weights sum to 1; the Gini penalty is always −0.10) and the episode length:
+* **Easy (30 steps):** solvency 0.78, profit 0.11, GDP 0.11. Mostly rewards survival.
+* **Medium (30 steps):** profit 0.67, solvency 0.22, GDP 0.11. Mostly rewards profit.
+* **Hard (60 steps):** profit 0.44, GDP 0.33, solvency 0.22. Longer episodes with more weight on economy-wide GDP growth.
+
+The PPO agent does not train on these weights; it uses the net-worth reward described below.
 
 ## API Documentation
 
 ### POST `/reset`
-Re-initializes the simulation and applies random seeds securely for verifiable trajectories.
+Re-initializes the session's simulation. The same seed always reproduces the same trajectory.
 **Payload:** `{"difficulty": "medium", "seed": 42}` 
 
 ### POST `/step`
-Advances the underlying state by one timestep returning dense rewards and semantic feedback.
-**Payload:** `{"set_price": 10.5, "hire_workers": 2, "capex": 500, "lobby_tax_change": 0.0}`
+Advances the simulation by one timestep and returns the observation, the composite reward with its feedback text, and a per-step breakdown.
+**Payload:** `{"set_price": 10.5, "set_wage": 520, "hire_workers": 2, "capex": 500, "lobby_tax_change": 0.0}` (`set_wage` is optional; the wage moves at most 10% per step toward it)
 
 ### GET `/state`
-Retrieves current observation parameters without advancing the environment time.
+Retrieves the current observation without advancing time.
+
+### Other endpoints
+* `GET /` serves the dashboard; `GET /health` is a health check.
+* `GET /meta` returns action bounds, defaults and difficulty presets.
+* `GET /agents` lists the built-in agents (scripted agents and the trained PPO agent).
+* `POST /compare` runs a leaderboard: every agent plays the same seeds, ranked by final net worth with a 95% confidence interval.
+* `POST /simulate` returns a full replay of one agent's episode.
 
 ## Evaluation & Verification
 
-The suite guarantees strict mathematical alignment using an automated testing framework comprising 230 explicit assertions verifying invariant rules:
-* Money conservation checks (Aggregate system wealth remains stable across exchanges).
-* Supply caps (Market captures cannot exceed installed capacity).
-* Grader alignment (Dense reward sums strictly correlate with intended sparse metrics like firm survival durations and market dominance distributions).
+The test files check the simulator's invariants and behavior, including:
+* Money accounting: each step's change in total wealth equals revenue minus every cost and outflow.
+* Supply caps: a firm never sells more than its production capacity.
+* Labor market: the number of workers is constant, and every worker move is recorded.
+* Golden tests: the legacy and v2 rules reproduce stored trajectories exactly.
+* Grader alignment: on the scenarios tested (legacy rules), the composite reward ranks strategies in the same order as final net worth.
+
+4 checks in `test_simulator.py` fail and predate this work (see Limitations below).
 
 ## Setup Instructions
 
@@ -68,8 +81,8 @@ The suite guarantees strict mathematical alignment using an automated testing fr
 
 1. Install dependencies:
    `pip install -r requirements.txt`
-2. Run the unit test verifications locally:
-   `python test_api.py` (and adjacent test files)
+2. Run the tests (the API tests also need `pip install httpx`):
+   `python test_api.py` (and the other `test_*.py` files)
 3. Launch the API and dashboard:
    `uvicorn api:app --host 0.0.0.0 --port 7860`, then open http://localhost:7860
 
@@ -172,7 +185,7 @@ Two runs are reported, each for a different purpose:
 1. **Spillover exploit (rounds 1 and 2).** With 40% of turned-away demand
    spilling to firms that have spare capacity, PPO learned to price about 22%
    above rivals and hold idle workers to harvest that overflow, reaching $107k
-   against $68.5k for the best scripted agent. With spillover off, the same
+   against $68.5k for the best scripted agent (validation seeds). With spillover off, the same
    policy fell *below* that agent. NPC growth (v2) did not fix it. The cause is
    structural: demand is about 2.7× the economy's maximum output and does not
    respond to the price level. Spillover is therefore off by default.
