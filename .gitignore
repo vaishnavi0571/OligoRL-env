@@ -23,3 +23,6 @@ tmp/
 results/**/*.zip
 # Evaluation dry run (validation-seed code check only)
 results/ppo/dryrun/
+
+# Personal working notes (kept locally, not part of the project)
+logs.txt

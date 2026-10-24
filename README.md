@@ -1,14 +1,3 @@
----
-title: MetaXRajdhani
-emoji: 🤖
-colorFrom: blue
-colorTo: purple
-sdk: docker
-app_port: 7860
-pinned: false
-license: mit
----
-
 # OpenEnv Simulation Framework
 
 ## Overview
@@ -75,21 +64,26 @@ The suite guarantees strict mathematical alignment using an automated testing fr
 
 ## Setup Instructions
 
-### Standard Installation
+### Run locally
 
 1. Install dependencies:
    `pip install -r requirements.txt`
 2. Run the unit test verifications locally:
    `python test_api.py` (and adjacent test files)
-3. Launch the API:
-   `uvicorn api:app --host 0.0.0.0 --port 7860`
+3. Launch the API and dashboard:
+   `uvicorn api:app --host 0.0.0.0 --port 7860`, then open http://localhost:7860
 
-### Docker Deployment
+`requirements.txt` is everything the API, dashboard and trained PPO agent need
+(the PPO model runs on numpy alone). Training needs `requirements-train.txt`
+as well (torch, Stable-Baselines3, gymnasium, matplotlib).
 
-1. Build the lightweight image:
-   `docker build -t openenv .`
-2. Run the container:
-   `docker run -p 7860:7860 openenv`
+**Verification:** the app was verified on Python 3.10 (WSL Ubuntu) with only
+`requirements.txt` installed and no torch loaded. The API server starts, the
+dashboard, leaderboard and replay endpoints respond, and the leaderboard
+reproduces PPO's $39,473.44 ± $1,345.99 exactly (as on the Windows development
+machine). The test suite was run on the development machine. `test_api.py` and
+`test_dashboard_api.py` additionally need `httpx` for FastAPI's test client.
+No Docker build was performed, and no Hugging Face Space deployment was done.
 
 ## Reinforcement learning: PPO agent
 

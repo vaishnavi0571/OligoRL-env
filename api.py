@@ -255,7 +255,7 @@ def dashboard():
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint (e.g. Hugging Face Spaces)"""
+    """Health check endpoint (liveness probe for any host or uptime monitor)"""
     return {"status": "ok", "message": "OpenEnv API is running and healthy"}
 
 

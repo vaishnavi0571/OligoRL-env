@@ -4,5 +4,5 @@
 HOST=0.0.0.0
 PORT=8000
 
-# To control random seed explicitly across the whole container:
+# To control random seed explicitly across the whole server process:
 # ENVIRONMENT_SEED=42
