@@ -70,7 +70,9 @@ from config import (
     POACH_PREMIUM, MAX_POACH_RATE,
     NPC_WAGE_STEP_RANGE, NPC_WAGE_RELAX_RANGE, NPC_RELAX_STEPS_RANGE,
     NPC_MAX_WAGE_SHARE_RANGE,
-    SPILLOVER_FRACTION,
+    SPILLOVER_FRACTION, SPILLOVER_FRACTION_V1, NPC_PROFILES, NPC_PROFILES_V1,
+    NPC_GROWTH_CAP_RANGE, NPC_GROWTH_FILL_RANGE, NPC_GROWTH_BUFFER_RANGE,
+    NPC_GROWTH_MARGIN_RANGE, NPC_MIN_WORKERS, QUIT_SMOOTH_WIDTH,
     PRESETS, DEFAULT_DIFFICULTY,
 )
 from rewards import update_ema
@@ -185,6 +187,28 @@ def reservation_share(wage: float, market_wage: float) -> float:
     return min(max((ratio - RESERVATION_WAGE_LOW) / span, 0.0), 1.0)
 
 
+def _softplus(x: float) -> float:
+    return x + math.log1p(math.exp(-x)) if x > 0 else math.log1p(math.exp(x))
+
+
+def quit_rate(gap: float, smooth: bool) -> float:
+    """Share of a firm's workers that quit, given its relative wage gap
+    below the reference wage (gap > 0 means underpaying).
+
+    v1 (smooth=False): zero inside QUIT_TOLERANCE, linear beyond (a kink).
+    v2 (smooth=True):  softplus-smoothed version of the same curve, zero
+                       at gap = 0 (config 7f).
+    """
+    if gap <= 1e-9:
+        return 0.0
+    if not smooth:
+        excess = gap - QUIT_TOLERANCE
+        return 0.0 if excess <= 0 else min(MAX_QUIT_RATE, QUIT_SENSITIVITY * excess)
+    w = QUIT_SMOOTH_WIDTH
+    soft = _softplus((gap - QUIT_TOLERANCE) / w) - _softplus(-QUIT_TOLERANCE / w)
+    return min(MAX_QUIT_RATE, QUIT_SENSITIVITY * w * soft)
+
+
 def stochastic_round(x: float, rng: random.Random) -> int:
     """Round x up with probability equal to its fractional part."""
     base = int(x)
@@ -215,6 +239,14 @@ class FirmState:
     wage_relax: float = 0.01
     relax_steps: int = 3
     max_wage_share: float = 0.9
+    price_anchor: float = DEFAULT_PRICE   # NPC prices = anchor x (1 +/- 2% noise)
+    # NPC growth rule (rules v2, config 7f)
+    growth_cap: int = 1
+    growth_fill: float = 1.0
+    growth_buffer: float = 3.0
+    growth_margin: float = 0.1
+    target_workers: int = INITIAL_WORKER_COUNT
+    last_demand: float = 0.0              # own demand last step (lag input)
 
 
 @dataclass
@@ -236,6 +268,8 @@ class StepInfo:
     demand: float = 0.0         # player's own potential demand (units)
     spill_units: float = 0.0    # extra units sold from rivals' unserved demand
     spill_pool: float = 0.0     # total units spilled this step
+    total_units_all: float = 0.0  # units sold by all firms (incl. spillover)
+    total_demand_all: float = 0.0  # own potential demand summed over all firms
     # Labor market (player)
     wage: float = 0.0
     market_wage: float = 0.0
@@ -252,6 +286,7 @@ class StepInfo:
     firm_quits: List[int] = field(default_factory=list)
     firm_poached_out: List[int] = field(default_factory=list)
     firm_hires: List[int] = field(default_factory=list)
+    firm_fired: List[int] = field(default_factory=list)
     firm_active: List[bool] = field(default_factory=list)
     labor_flows: List[List[int]] = field(default_factory=list)
     """[src, dst, count] moves this step; -1 = unemployed pool."""
@@ -288,11 +323,31 @@ class EconSimulator:
         difficulty: str = DEFAULT_DIFFICULTY,
         seed: int = 42,
         spillover_fraction: Optional[float] = None,
+        npc_profile: str = "default",
+        lobbying_enabled: bool = True,
+        npc_growth: bool = True,
+        smooth_quits: Optional[bool] = None,
     ):
+        """Experiment flags:
+            npc_profile:      "default" | "train" | "heldout" (config 7d)
+            lobbying_enabled: False ignores every lobby_tax_change action
+            npc_growth:       rules v2 (config 7f, the default; spillover
+                              off).  False reproduces the round-1 rules
+                              exactly (incl. spillover 0.4).
+            smooth_quits:     v2 quit curve; defaults to npc_growth
+        """
+        self.profiles = NPC_PROFILES if npc_growth else NPC_PROFILES_V1
+        if npc_profile != "default" and npc_profile not in self.profiles:
+            raise ValueError(f"Unknown npc_profile '{npc_profile}'")
         self.preset = PRESETS[difficulty]
         self._seed = seed
+        self.npc_profile = npc_profile
+        self.lobbying_enabled = lobbying_enabled
+        self.npc_growth = npc_growth
+        self.smooth_quits = npc_growth if smooth_quits is None else smooth_quits
+        default_spill = SPILLOVER_FRACTION if npc_growth else SPILLOVER_FRACTION_V1
         self.spillover_fraction = (
-            SPILLOVER_FRACTION if spillover_fraction is None else spillover_fraction
+            default_spill if spillover_fraction is None else spillover_fraction
         )
         self.last_units_sold: float = 0.0
         self.last_capacity: float = 0.0
@@ -329,6 +384,17 @@ class EconSimulator:
             npc.wage_relax = self.labor_rng.uniform(*NPC_WAGE_RELAX_RANGE)
             npc.relax_steps = self.labor_rng.randint(*NPC_RELAX_STEPS_RANGE)
             npc.max_wage_share = self.labor_rng.uniform(*NPC_MAX_WAGE_SHARE_RANGE)
+        if self.npc_growth:
+            # Separate stream: growth draws never shift the v1 sequences
+            grng = random.Random(self._seed * 15485863 + 3)
+            for npc in self.npc_firms:
+                npc.growth_cap = grng.randint(*NPC_GROWTH_CAP_RANGE)
+                npc.growth_fill = grng.uniform(*NPC_GROWTH_FILL_RANGE)
+                npc.growth_buffer = grng.uniform(*NPC_GROWTH_BUFFER_RANGE)
+                npc.growth_margin = grng.uniform(*NPC_GROWTH_MARGIN_RANGE)
+        if self.npc_profile != "default":
+            # Separate stream: profile draws never shift the default sequence
+            self._draw_npc_profile(random.Random(self._seed * 104729 + 7))
         self.price_index = INITIAL_PRICE_INDEX
         self.market_demand = MARKET_DEMAND_INITIAL
         self.tax_rate = TAX_RATE
@@ -367,7 +433,7 @@ class EconSimulator:
         hire = int(action.get("hire_workers", 0))
         hire = max(-p.worker_count, min(MAX_HIRE_PER_STEP, hire))
         capex = max(float(action.get("capex", 0.0)), 0.0)
-        lobby = float(action.get("lobby_tax_change", 0.0))
+        lobby = float(action.get("lobby_tax_change", 0.0)) if self.lobbying_enabled else 0.0
         lobby = max(LOBBY_TAX_CHANGE_MIN, min(LOBBY_TAX_CHANGE_MAX, lobby))
         wage = action.get("set_wage")
         wage = p.wage if wage is None else float(wage)
@@ -378,9 +444,11 @@ class EconSimulator:
         npc_prices = []
         for npc in self.npc_firms:
             noise = 1.0 + self.rng.gauss(0, 0.02)
-            npc.price = max(DEFAULT_PRICE * noise, PRICE_FLOOR)
+            npc.price = max(npc.price_anchor * noise, PRICE_FLOOR)
             npc_prices.append(npc.price)
         self._update_npc_wages()
+        if self.npc_growth:
+            self._update_npc_targets()
 
         # ===== 3. Labor market: firing, quits, hiring, poaching =====
         firms = [p] + self.npc_firms
@@ -438,6 +506,7 @@ class EconSimulator:
             npc_revenues.append(n_rev)
             npc_units_sold_list.append(n_sold)
             npc_demands.append(n_dem)
+            npc.last_demand = n_dem   # growth-rule input for next step
 
         # ===== 5b. Demand spillover =====
         if self.spillover_fraction > 0:
@@ -454,6 +523,9 @@ class EconSimulator:
             info.spill_units = spill[0]
             info.units_sold, info.revenue = sold[0], revenues[0]
             npc_units_sold_list, npc_revenues = sold[1:], revenues[1:]
+
+        info.total_units_all = info.units_sold + sum(npc_units_sold_list)
+        info.total_demand_all = info.demand + sum(npc_demands)
 
         # ===== 6. Pay expenses, update cash =====
         # Player
@@ -479,7 +551,7 @@ class EconSimulator:
         for i, npc in enumerate(self.npc_firms):
             npc_labor = npc.worker_count * npc.wage
             npc_input = npc_units_sold_list[i] * INPUT_COST_PER_UNIT
-            npc_hiring = info.firm_hires[i + 1] * HIRING_COST_PER_WORKER
+            npc_hiring = (info.firm_hires[i + 1] + info.firm_fired[i + 1]) * HIRING_COST_PER_WORKER
             npc_gross = npc_revenues[i] - npc_labor - npc_input
             npc_tax = max(npc_gross, 0.0) * self.tax_rate
             npc.cash += npc_revenues[i] - npc_labor - npc_input - npc_tax - npc_hiring
@@ -570,6 +642,51 @@ class EconSimulator:
 
         return self._build_observation(), info
 
+    def _draw_npc_profile(self, rng: random.Random) -> None:
+        """Overwrite NPC rule parameters with draws from an experiment profile."""
+        ranges = self.profiles[self.npc_profile]
+
+        def draw(key: str, integer: bool = False):
+            lo, hi = rng.choice(ranges[key])
+            return rng.randint(lo, hi) if integer else rng.uniform(lo, hi)
+
+        for npc in self.npc_firms:
+            npc.wage_step = draw("wage_step")
+            npc.wage_relax = draw("wage_relax")
+            npc.relax_steps = draw("relax_steps", integer=True)
+            npc.max_wage_share = draw("max_wage_share")
+            npc.price_anchor = draw("price_anchor")
+            if self.npc_growth:
+                npc.growth_cap = draw("growth_cap", integer=True)
+                npc.growth_fill = draw("growth_fill")
+                npc.growth_buffer = draw("growth_buffer")
+                npc.growth_margin = draw("growth_margin")
+
+    def _update_npc_targets(self) -> None:
+        """Rules v2: NPC headcount follows last step's own demand (config 7f)."""
+        for npc in self.npc_firms:
+            if not npc.active:
+                continue
+            w = npc.worker_count
+            cap = npc.growth_cap
+            mrp = WORKER_PRODUCTIVITY * max(npc.price - INPUT_COST_PER_UNIT, 0.0)
+            if npc.last_demand > 0:
+                desired = max(NPC_MIN_WORKERS,
+                              math.ceil(npc.growth_fill * npc.last_demand / WORKER_PRODUCTIVITY))
+            else:
+                desired = w
+            affordable = (mrp >= npc.wage * (1.0 + npc.growth_margin)
+                          and npc.cash >= npc.growth_buffer * (w + 1) * npc.wage)
+            if mrp < npc.wage:
+                target = max(NPC_MIN_WORKERS, w - cap)       # losing money per worker
+            elif desired > w:
+                target = min(w + cap, desired) if affordable else w
+            elif desired < w:
+                target = max(NPC_MIN_WORKERS, w - cap, desired)
+            else:
+                target = w
+            npc.target_workers = target
+
     def _spill_demand(
         self,
         firms: List[FirmState],
@@ -659,12 +776,23 @@ class EconSimulator:
         def move(src: int, dst: int, k: int = 1) -> None:
             flows[(src, dst)] = flows.get((src, dst), 0) + k
 
-        # 1. Firing (player only): fired workers go straight to the pool
+        # 1. Firing: fired workers go straight to the pool.  The player fires
+        #    by action; in rules v2 NPCs downsize toward their target.
+        fired_all = [0] * n
         fired = max(-hire, 0)
         if fired:
             self.player.worker_count -= fired
             self.unemployed += fired
+            fired_all[0] = fired
             move(0, POOL, fired)
+        if self.npc_growth:
+            for i, npc in enumerate(self.npc_firms, start=1):
+                cut = max(npc.worker_count - npc.target_workers, 0) if npc.active else 0
+                if cut:
+                    npc.worker_count -= cut
+                    self.unemployed += cut
+                    fired_all[i] = cut
+                    move(i, POOL, cut)
 
         market = weighted_median(
             [(f.wage, f.worker_count) for f in firms if f.active]
@@ -679,10 +807,9 @@ class EconSimulator:
                 (g.wage, g.worker_count)
                 for j, g in enumerate(firms) if j != i and g.active
             ])
-            excess_gap = (ref - f.wage) / ref - QUIT_TOLERANCE
-            if excess_gap <= 0:
+            rate = quit_rate((ref - f.wage) / ref, self.smooth_quits)
+            if rate <= 0:
                 continue
-            rate = min(MAX_QUIT_RATE, QUIT_SENSITIVITY * excess_gap)
             q = min(stochastic_round(f.worker_count * rate, rng), f.worker_count)
             if q:
                 f.worker_count -= q
@@ -690,9 +817,11 @@ class EconSimulator:
                 quits[i] = q
                 move(i, POOL, q)
 
-        # Openings: player's request; NPCs refill to their target headcount
+        # Openings: player's request; NPCs fill up to their target headcount
+        # (v1: always INITIAL_WORKER_COUNT; v2: demand-driven target)
         openings = [max(hire, 0)] + [
-            max(INITIAL_WORKER_COUNT - npc.worker_count, 0) if npc.active else 0
+            max((npc.target_workers if self.npc_growth else INITIAL_WORKER_COUNT)
+                - npc.worker_count, 0) if npc.active else 0
             for npc in self.npc_firms
         ]
 
@@ -776,6 +905,7 @@ class EconSimulator:
         info.firm_quits = quits
         info.firm_poached_out = poached_out
         info.firm_hires = hires
+        info.firm_fired = fired_all
         info.firm_active = [f.active for f in firms]
         info.labor_flows = [[s, d, k] for (s, d), k in flows.items()]
 

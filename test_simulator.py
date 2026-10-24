@@ -17,6 +17,14 @@ from config import (
     EASY, HARD,
 )
 
+# These checks cover the round-1 (v1) rules, which remain available as
+# legacy mode.  Rules v2 (NPC growth + smooth quits) are tested in
+# test_rules_v2.py.
+import functools as _functools
+import simulator as _simulator
+EconSimulator = _functools.partial(_simulator.EconSimulator, npc_growth=False)
+
+
 passed = 0
 failed = 0
 

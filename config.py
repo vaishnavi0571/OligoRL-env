@@ -286,14 +286,27 @@ PRICE_FLOOR: float = 0.01
 """Minimum allowed price. Prevents division by zero in demand model."""
 
 # -- Demand spillover --
-SPILLOVER_FRACTION: float = 0.4
-"""Fraction of a capacity-constrained firm's unserved demand that spills
-to firms with spare capacity.  0.0 disables spillover (clean ablation:
-fixed per-firm demand).  Guards:
+SPILLOVER_FRACTION: float = 0.0
+"""Rules v2 default: spillover OFF.  PPO showed in rounds 1 and 2 that any
+material spillover is exploitable: total demand (~8,000 units/step) is
+~2.7x the economy's maximum output (30 workers x 100), and demand depends
+only on relative prices, so turned-away customers never disappear and a
+premium-priced firm holding idle capacity harvests them.  Known limitation:
+with spillover off, a rival's capacity shortage no longer sends its
+customers to anyone (no demand coupling between firms).
+
+SPILLOVER_FRACTION_V1 is the round-1 value, used by legacy mode
+(npc_growth=False) so the round-1 golden snapshot reproduces exactly.
+
+Fraction of a capacity-constrained firm's unserved demand that spills
+to firms with spare capacity.  0.0 disables spillover (fixed per-firm
+demand).  Guards (when > 0):
   - spare capacity uses start-of-step headcount (one-step hiring lag),
     so workers poached this step cannot serve spilled customers yet
   - one simultaneous round, split proportional to spare capacity
   - firms whose cash cannot cover this step's wage bill get no spillover"""
+
+SPILLOVER_FRACTION_V1: float = 0.4
 
 # -- GDP-demand feedback --
 GDP_DEMAND_SENSITIVITY: float = 0.1
@@ -455,6 +468,103 @@ WAGE_RUNWAY_STEEPNESS: float = 3.0
 
 ACTIVITY_REFERENCE_UNITS: float = INITIAL_WORKER_COUNT * WORKER_PRODUCTIVITY
 """Units sold that earn full solvency credit (the starting firm's output)."""
+
+# ---------------------------------------------------------------------
+# 7d. EXPERIMENT PROFILES (opt-in; defaults reproduce the leaderboard)
+# ---------------------------------------------------------------------
+# NPC rule parameters per profile, as lists of (low, high) intervals: a
+# value is drawn by picking one interval uniformly at random, then a value
+# uniformly inside it (integers for relax_steps).
+#   default : the NPC_*_RANGE values above, fixed NPC price anchor $10.
+#             Used by the leaderboard and golden test.  Unchanged.
+#   train   : each range CONTAINS the default range (wider).
+#   heldout : outside the train ranges on BOTH sides -- NPC behaviour
+#             the PPO agent never saw, for out-of-distribution eval.
+
+# Round-1 profiles (rules v1, npc_growth=False).  Kept unchanged so the
+# round-1 numbers reproduce exactly.
+NPC_PROFILES_V1: Dict[str, Dict[str, list]] = {
+    "train": {
+        "wage_step":      [(0.01, 0.06)],
+        "wage_relax":     [(0.0025, 0.025)],
+        "relax_steps":    [(1, 6)],
+        "max_wage_share": [(0.80, 1.00)],
+        "price_anchor":   [(9.0, 11.0)],
+    },
+    "heldout": {
+        "wage_step":      [(0.0, 0.01), (0.06, 0.09)],
+        "wage_relax":     [(0.0, 0.0025), (0.025, 0.04)],
+        "relax_steps":    [(0, 0), (7, 9)],
+        "max_wage_share": [(0.70, 0.80), (1.00, 1.10)],
+        "price_anchor":   [(8.0, 9.0), (11.0, 12.0)],
+    },
+}
+
+# Rules v2 (npc_growth=True).  Train includes price-war NPCs (low price
+# anchors), overpaying NPCs (wage cap above marginal revenue product) and
+# frozen-headcount NPCs (growth_cap 0, cannot downsize) -- the combination
+# goes bankrupt and releases workers.  Heldout stays outside train on both
+# sides, except growth_cap, which cannot go below 0 (upper side only).
+# Growth keys are described in 7f.
+NPC_PROFILES: Dict[str, Dict[str, list]] = {
+    "train": {
+        "wage_step":       [(0.01, 0.06)],
+        "wage_relax":      [(0.0025, 0.025)],
+        "relax_steps":     [(1, 6)],
+        "max_wage_share":  [(0.70, 1.25)],
+        "price_anchor":    [(6.5, 12.5)],
+        "growth_cap":      [(0, 3)],
+        "growth_fill":     [(0.6, 1.0)],
+        "growth_buffer":   [(1.0, 5.0)],
+        "growth_margin":   [(0.0, 0.25)],
+    },
+    "heldout": {
+        "wage_step":       [(0.0, 0.01), (0.06, 0.09)],
+        "wage_relax":      [(0.0, 0.0025), (0.025, 0.04)],
+        "relax_steps":     [(0, 0), (7, 9)],
+        "max_wage_share":  [(0.55, 0.70), (1.25, 1.40)],
+        "price_anchor":    [(5.5, 6.5), (12.5, 13.5)],
+        "growth_cap":      [(4, 6)],
+        "growth_fill":     [(0.4, 0.6), (1.0, 1.2)],
+        "growth_buffer":   [(0.0, 1.0), (5.0, 7.0)],
+        "growth_margin":   [(-0.1, 0.0), (0.25, 0.4)],
+    },
+}
+
+# ---------------------------------------------------------------------
+# 7f. RULES V2: NPC GROWTH + SMOOTH QUITS  (npc_growth=True, the default)
+# ---------------------------------------------------------------------
+# Round 1 showed NPCs stuck at INITIAL_WORKER_COUNT leave a permanent
+# overflow of customers that a premium-priced firm with idle capacity can
+# harvest via spillover.  In v2 each NPC sizes its workforce to its own
+# demand from the PREVIOUS step (one-step lag):
+#   desired  = ceil(fill * last_own_demand / WORKER_PRODUCTIVITY)
+#   grow     only if affordable:
+#              MRP = WORKER_PRODUCTIVITY * (price - INPUT_COST_PER_UNIT)
+#              MRP >= wage * (1 + margin)   and
+#              cash >= buffer * (workers + 1) * wage
+#   shrink   symmetrically when desired < workers, or when MRP < wage
+#   change   at most `cap` workers per step in either direction, never
+#            below NPC_MIN_WORKERS; fired workers go to the pool and cost
+#            HIRING_COST_PER_WORKER, like the player's
+# Each NPC draws (cap, fill, buffer, margin) per episode.
+#
+# Smooth quits replace the kink at the tolerance edge (round 1: paying
+# 0.97x market cost nothing, 0.96x started quits):
+#   rate = min(MAX_QUIT_RATE, SENS * w * (softplus((gap - tol) / w)
+#                                          - softplus(-tol / w)))   gap > 0
+# Zero at equal wages, ~1.3%/step at a 3% gap, matches v1 beyond ~5%.
+#
+# npc_growth=False reproduces the round-1 rules exactly (golden test).
+
+NPC_GROWTH_CAP_RANGE: tuple = (1, 2)
+NPC_GROWTH_FILL_RANGE: tuple = (0.7, 1.0)
+NPC_GROWTH_BUFFER_RANGE: tuple = (2.0, 4.0)
+NPC_GROWTH_MARGIN_RANGE: tuple = (0.05, 0.2)
+NPC_MIN_WORKERS: int = 1
+
+QUIT_SMOOTH_WIDTH: float = 0.01
+"""Softplus width w for the v2 quit curve (in units of relative wage gap)."""
 
 # -- Leaderboard (evaluation, not training) --
 BANKRUPTCY_PENALTY: float = INITIAL_FIRM_CASH
