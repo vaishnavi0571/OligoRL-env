@@ -641,7 +641,12 @@ const watch = {
   ready: false,
 };
 
-const agentColorKey = (name) => `--agent-${watch.colorIndex[name] ?? 0}`;
+// The trained agent is the one the demo is about: it gets the primary ink
+// color (adapts to light/dark) instead of a 9th categorical hue. Scripted
+// agents keep the 8 validated categorical slots in fixed order.
+const HIGHLIGHT_AGENT = "ppo";
+const agentColorKey = (name) =>
+  name === HIGHLIGHT_AGENT ? "--ink" : `--agent-${watch.colorIndex[name] ?? 0}`;
 const agentLabel = (name) => (watch.agents.find((a) => a.name === name) || { label: name }).label;
 
 function showTab(name) {
@@ -669,7 +674,8 @@ async function initWatch() {
     toast(`Could not load agents: ${e.message}`);
     return;
   }
-  watch.agents.forEach((a, i) => { watch.colorIndex[a.name] = i; });
+  watch.agents.filter((a) => a.name !== HIGHLIGHT_AGENT)
+    .forEach((a, i) => { watch.colorIndex[a.name] = i; });
 
   const diff = $("w-difficulty");
   Object.entries(state.meta.presets).forEach(([name, p]) => {
