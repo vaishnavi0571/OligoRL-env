@@ -1,7 +1,7 @@
 """
 Phase 5 -- API Layer Tests
 =============================
-Tests the FastAPI wrapper around the OpenEnv simulator.
+Tests the FastAPI wrapper around the OligoRL simulator.
 
 Run: python test_api.py
 """

@@ -1,11 +1,12 @@
 """
-OpenEnv -- Phase 1 Configuration
-=================================
+OligoRL -- Configuration
+========================
 Single source of truth for every mathematical constant and design decision.
 All reward functions, the simulator state machine, and the API layer import
 from this file.  Change a number here => it changes everywhere.
 
-Design decisions are documented inline; the full rationale lives in logs.txt.
+Design decisions and their rationale are documented inline, section by
+section; the README summarizes the model and the PPO experiment.
 """
 
 from dataclasses import dataclass

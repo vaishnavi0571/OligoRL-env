@@ -1,7 +1,9 @@
 """
-OpenEnv -- Phase 2: Reward Components
-======================================
-Four pure functions, each taking only numbers and returning a float.
+OligoRL -- Reward Components
+============================
+Pure functions, each taking only numbers: the four composite-reward
+components (profit, solvency, GDP, Gini), the training-solvency helpers
+(wage runway, activity), and the PPO net-worth reward.
 No environment state, no Pydantic, no FastAPI.
 
 All defaults come from config.py but every parameter is overridable

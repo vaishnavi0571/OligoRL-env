@@ -1,7 +1,7 @@
 """
-OpenEnv -- Phase 4: Reward Integrator
-======================================
-Connects Phase 2 (reward components) with Phase 3 (simulator).
+OligoRL -- Reward Integrator
+============================
+Connects the reward components (rewards.py) with the simulator.
 After each step(), call compute_step_reward() to get the composite
 reward and a deterministic semantic feedback string.
 

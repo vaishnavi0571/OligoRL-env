@@ -1,6 +1,6 @@
 """
-OpenEnv -- Phase 3: Simulator State Machine
-=============================================
+OligoRL -- Simulator State Machine
+===================================
 Pure economic simulation.  No reward logic, no API layer.
 Testable in isolation by running step() with hardcoded actions.
 

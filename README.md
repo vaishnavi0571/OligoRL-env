@@ -1,7 +1,9 @@
-# OpenEnv Simulation Framework
+# OligoRL: Firm-Level Reinforcement Learning in a Simulated Oligopoly with Product and Labor Competition
 
 ## Overview
-OpenEnv is a seeded, reproducible macroeconomic environment for training and evaluating Reinforcement Learning (RL) agents. It simulates a competitive market of one player firm and four NPC firms that compete for customers and workers, with macroeconomic feedback loops, capacity constraints and a labor market.
+**OligoRL: Firm-Level Reinforcement Learning in a Simulated Oligopoly with Product and Labor Competition** is a seeded, reproducible environment for training and evaluating reinforcement learning (RL) agents. One player firm and four NPC firms form an oligopoly that competes on two fronts. In the **product market**, firms set prices and compete for customers. In the **labor market**, they set wages and compete for a fixed pool of workers. Macroeconomic feedback loops and capacity constraints tie the two together.
+
+OligoRL includes an interactive dashboard (play the firm yourself, or watch agents compete on a leaderboard), scripted baseline agents, and a PPO agent trained with a pre-registered evaluation protocol.
 
 The environment tracks microeconomic variables (revenue, operating costs, wages, capital expenditure) alongside macroeconomic indicators (real GDP, price index, Gini coefficient). A rule-based reward engine scores each step and explains its score in plain text. The PPO experiment below documents the exploits an RL agent found in earlier versions of the rules, and how they were addressed.
 
@@ -9,15 +11,16 @@ The environment tracks microeconomic variables (revenue, operating costs, wages,
 
 The system is cleanly separated into layered modules:
 
-### 1. Mathematical Foundation (`config.py`)
-Centralized variables defining all structural relationships, baseline demand thresholds, operational constants, and bounded clamping arrays designed to preserve monotonic gradients.
+### 1. Configuration (`config.py`)
+Every constant and design decision in one place, with the reasoning written inline: market and production parameters, the labor market (section 7b), the training-solvency score (7c), experiment NPC profiles (7d), the PPO reward (7e) and the v2 rules (7f).
 
 ### 2. Reward Engine (`rewards.py`)
-Pure mathematical functions capturing standard economic metrics:
-* **Profit Score:** Inverse Hyperbolic Sine (IHS) normalized tracking of absolute profit to prevent margin-punishment during volume expansion.
-* **Solvency Score:** Logistic sigmoid mapping of cash runway preventing early starvation.
-* **GDP Score:** Relative, scale-invariant delta measurement.
-* **Gini Penalty:** O(n log n) sorted-array metric punishing extreme structural inequality.
+Pure functions over plain numbers:
+* **Profit Score:** inverse hyperbolic sine (IHS) of net income, normalized by a revenue moving average, so growing volume is not punished.
+* **Solvency Score:** sigmoid of wage runway (cash ÷ wage bill, capped), multiplied by an activity factor (units sold ÷ baseline output), so a firm that stops producing is not scored as "safe".
+* **GDP Score:** relative, scale-invariant change in real GDP.
+* **Gini Penalty:** penalty on wealth inequality above a threshold.
+* **Net-worth reward:** the PPO training reward (see the PPO section).
 
 ### 3. Core State Machine (`simulator.py`)
 A single-threaded `EconSimulator` that runs each timestep in a fixed order:
@@ -34,6 +37,20 @@ Computes weighted composite reward mapping RL policies to intended outcomes base
 
 ### 5. Network Layer (`api.py`)
 A thin FastAPI and Pydantic wrapper with schema validation. Each browser session (`X-Session-Id` header) gets its own simulator, guarded by a lock; it also serves the dashboard.
+
+### 6. Agents and Leaderboard (`agents.py`)
+Scripted agents (Rule-based, Hold, Market + 1%, Premium pricer, Minimum wage, Maximum wage, Poacher, Random) and the trained PPO agent. Leaderboards rank agents by final net worth (cash + capital, −$10k if bankrupt) over shared seeds, with 95% confidence intervals.
+
+### 7. Dashboard (`static/`)
+A browser dashboard served at `/`:
+* **Play tab:** run the firm yourself (price, wage, hiring, capex, lobbying), with live charts, the labor market and the reward commentary.
+* **Watch tab:** the agent leaderboard, net-worth curves and step-by-step replays of any agent, including PPO.
+
+### 8. PPO Experiment (`ppo/`)
+Observation and action spaces, the gymnasium environment, training, numpy export, and the evaluation and analysis scripts. Results live in `results/ppo/`, and the exported model in `models/`.
+
+### 9. Tests
+`test_*.py` check the simulator, labor market, rewards, API and dashboard endpoints. `test_golden.py` checks that both rule sets (legacy and v2) reproduce stored trajectories exactly.
 
 ## Difficulty Presets
 

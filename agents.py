@@ -1,5 +1,5 @@
 """
-OpenEnv -- Agents and Leaderboard Scoring
+OligoRL -- Agents and Leaderboard Scoring
 ==========================================
 Every agent maps an observation dict to an action dict.  Agents may keep
 state between steps; call reset(seed) at the start of each episode.

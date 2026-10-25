@@ -36,11 +36,12 @@ STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
 # Setup minimal logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
-logger = logging.getLogger("OpenEnvAPI")
+logger = logging.getLogger("OligoRL")
 
 app = FastAPI(
-    title="OpenEnv API",
-    description="Thin FastAPI wrapper around the OpenEnv economic simulator",
+    title="OligoRL API",
+    description="Thin FastAPI wrapper around the OligoRL simulator: a firm-level RL "
+                "environment for a simulated oligopoly with product and labor competition",
     version="1.0.0",
 )
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -256,7 +257,7 @@ def dashboard():
 @app.get("/health")
 def health_check():
     """Health check endpoint (liveness probe for any host or uptime monitor)"""
-    return {"status": "ok", "message": "OpenEnv API is running and healthy"}
+    return {"status": "ok", "message": "OligoRL API is running and healthy"}
 
 
 @app.get("/meta")
