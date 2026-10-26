@@ -90,7 +90,7 @@ The test files check the simulator's invariants and behavior, including:
 * Golden tests: the legacy and v2 rules reproduce stored trajectories exactly.
 * Grader alignment: on the scenarios tested (legacy rules), the composite reward ranks strategies in the same order as final net worth.
 
-4 checks in `test_simulator.py` fail and predate this work (see Limitations below).
+1 check in `test_simulator.py` fails and predates this work (see Limitations below).
 
 ## Setup Instructions
 
@@ -233,12 +233,13 @@ Two runs are reported, each for a different purpose:
   15–18% held-out).
 - Only one difficulty (Medium) is covered, and test results come from one seed
   range per profile.
-- **Known failing tests (pre-existing):** 4 checks in `test_simulator.py` also
-  fail on the commit before this work (`6ce5578`). All four are about the
-  original demand-share and overpricing expectations:
-  "Same price -> soft-capped fair share", "Extreme underpricing <
-  MAX_DEMAND_SHARE (0.4)", "Gradient preserved: cheaper=more share even near
-  cap", and "Overpricing: survived >= 10 steps".
+- **Known failing test (pre-existing):** "Overpricing: survived >= 10 steps" in
+  `test_simulator.py` also fails on the commit before this work (`6ce5578`).
+  At a $50 price the firm sells almost nothing but still pays wages, so it
+  goes bankrupt around step 5; the test's expectation is unrealistic, not the
+  simulator. Three other checks that also failed before this work expected an
+  older soft-cap formula for the demand share. They now test the formula the
+  code actually uses (`simulator.compute_demand_share`).
 
 ### Reproduce
 ```bash

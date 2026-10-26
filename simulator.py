@@ -21,9 +21,13 @@ Step order within each step() call:
    14. Advance time
 
 NPC POLICY:
-    - NPCs are "dumb followers" anchored to DEFAULT_PRICE +/- 2% noise
-    - NPCs never fire; they reopen positions up to INITIAL_WORKER_COUNT
-      when they lose workers
+    - NPC prices = price anchor x (1 +/- 2% noise); NPCs never react to the
+      player's price.  The anchor is DEFAULT_PRICE under the default profile
+      and is drawn per NPC under the train / heldout profiles (config 7d).
+    - Headcount: under rules v2 (default) each NPC sizes its workforce to
+      last step's demand and can hire or fire (config 7f).  Under rules v1
+      (npc_growth=False) NPCs never fire and only reopen positions up to
+      INITIAL_WORKER_COUNT when they lose workers.
     - NPC wages: raise after losing workers or leaving openings unfilled,
       relax toward WAGE_PER_WORKER after a calm streak, capped at an
       affordable share of a worker's marginal revenue product.  Each NPC
@@ -91,9 +95,14 @@ def compute_demand_share(
 ) -> float:
     """Fraction of total market demand captured by one agent.
 
-    Uses a SOFT cap: share = raw / (1 + raw / max_share).
-    This asymptotically approaches max_share without a hard cliff,
-    preserving the gradient at all demand levels.
+        raw = (1 / num_agents) * (competitor_avg_price / agent_price) ** elasticity
+
+    The share grows when rivals are MORE expensive than this agent.
+    Soft cap: up to threshold = 0.75 * max_share the share is raw;
+    above it, share = threshold + margin * (1 - exp(-excess / margin)),
+    with margin = max_share - threshold and excess = raw - threshold.
+    The share approaches max_share smoothly (no hard cliff); for extreme
+    undercutting the exponential underflows and the share equals max_share.
     """
     effective_price = max(agent_price, PRICE_FLOOR)
     if competitor_avg_price <= 0:

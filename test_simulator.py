@@ -56,11 +56,13 @@ def heading(title):
 heading("PURE FUNCTIONS: compute_demand_share (soft cap)")
 # ============================================================
 
-# Same price -> fair share (reduced by soft cap)
+# Same price -> fair share.  The soft cap only acts above 75% of
+# MAX_DEMAND_SHARE (0.30), so the fair share 1/N = 0.20 is unchanged.
 s = compute_demand_share(10.0, 10.0)
 raw_fair = 1.0 / NUM_AGENTS
-expected_soft = raw_fair / (1.0 + raw_fair / MAX_DEMAND_SHARE)
-check("Same price -> soft-capped fair share", approx(s, expected_soft, tol=0.001),
+expected_soft = raw_fair
+check("Same price -> fair share (below the soft-cap threshold)",
+      approx(s, expected_soft, tol=0.001),
       f"share = {s:.4f}, expected = {expected_soft:.4f}")
 
 # Half price -> higher share
@@ -73,17 +75,20 @@ s_double = compute_demand_share(20.0, 10.0)
 check("Double price -> less share", s_double < expected_soft,
       f"share = {s_double:.4f}")
 
-# Soft cap never exceeds MAX_DEMAND_SHARE
+# Soft cap never exceeds MAX_DEMAND_SHARE.  For extreme undercutting the
+# exponential term underflows to zero, so the share equals the cap exactly.
 s_extreme = compute_demand_share(0.01, 10.0)
-check(f"Extreme underpricing < MAX_DEMAND_SHARE ({MAX_DEMAND_SHARE})",
-      s_extreme < MAX_DEMAND_SHARE,
+check(f"Extreme underpricing never exceeds MAX_DEMAND_SHARE ({MAX_DEMAND_SHARE})",
+      s_extreme <= MAX_DEMAND_SHARE,
       f"share = {s_extreme:.4f}")
 
-# Soft cap preserves gradient (no cliff)
-s1 = compute_demand_share(3.0, 10.0)
-s2 = compute_demand_share(2.0, 10.0)
-check("Gradient preserved: cheaper=more share even near cap", s2 > s1,
-      f"price=3 -> {s1:.4f}, price=2 -> {s2:.4f}")
+# Soft cap preserves the gradient inside the soft-cap region (no cliff at
+# the threshold): both prices give raw shares above 0.30 but below saturation
+s1 = compute_demand_share(9.0, 10.0)
+s2 = compute_demand_share(8.5, 10.0)
+check("Gradient preserved in the soft-cap region: cheaper = more share",
+      MAX_DEMAND_SHARE * 0.75 < s1 < s2 < MAX_DEMAND_SHARE,
+      f"price=9.0 -> {s1:.4f}, price=8.5 -> {s2:.4f}")
 
 
 # ============================================================

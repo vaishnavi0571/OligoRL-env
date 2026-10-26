@@ -276,9 +276,12 @@ Higher = demand shifts more aggressively to cheaper firms."""
 
 MAX_DEMAND_SHARE: float = 0.40
 """Asymptotic maximum share a single firm can capture.
-Used as the ceiling of a SOFT cap (not hard clip):
-  share = raw_share / (1 + raw_share / MAX_DEMAND_SHARE)
-This preserves gradient at all demand levels."""
+Used as the ceiling of a SOFT cap (not hard clip), see
+simulator.compute_demand_share:
+  raw_share <= 0.75 * MAX_DEMAND_SHARE  ->  share = raw_share
+  above that  ->  share = threshold + margin * (1 - exp(-excess / margin))
+Below the threshold the full price elasticity applies; above it the
+share bends smoothly toward MAX_DEMAND_SHARE."""
 
 DEFAULT_PRICE: float = 10.0
 """Starting price for all agents and NPC reference price."""
