@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The 56% Loophole</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a lab-notebook column with two live exhibits (switch + chart, leak diagram) that share one rule switch. */
+:root {
+  --paper: #f3f5f2;
+  --card: #fbfcfa;
+  --ink: #16201e;
+  --muted: #55645f;
+  --line: #d2dad5;
+  --ppo: #0f6b5f;
+  --base: #7a8892;
+  --hot: #e0a100;
+  --hot-ink: #2a1f00;
+  --bad: #b3412f;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Literata", Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1615; --card: #162120; --ink: #e6ece9; --muted: #9fb0ab; --line: #28362f;
+    --ppo: #46c4b0; --base: #8a9aa4; --hot: #f0b429; --hot-ink: #2a1f00; --bad: #ec8b78;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1615; --card: #162120; --ink: #e6ece9; --muted: #9fb0ab; --line: #28362f;
+  --ppo: #46c4b0; --base: #8a9aa4; --hot: #f0b429; --hot-ink: #2a1f00; --bad: #ec8b78;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: var(--body); font-size: 18px; line-height: 1.68;
+}
+.wrap { max-width: 704px; margin: 0 auto; padding: 0 20px; }
+.wide { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+a { color: var(--ppo); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--hot); outline-offset: 2px; border-radius: 4px; }
+
+header.top { padding: 56px 20px 8px; }
+.kicker { font-family: var(--mono); font-size: 13px; letter-spacing: .04em; color: var(--muted); margin: 0 0 18px; }
+h1 {
+  font-family: var(--display); font-weight: 800; font-size: clamp(36px, 7vw, 62px);
+  line-height: 1.02; letter-spacing: -0.02em; margin: 0 0 18px; text-wrap: balance;
+}
+h1 .num { color: var(--ppo); }
+.dek { font-size: 21px; line-height: 1.45; color: var(--muted); margin: 0 0 20px; font-style: italic; text-wrap: pretty; }
+.by { font-family: var(--mono); font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; margin: 0; }
+
+h2 { font-family: var(--display); font-weight: 700; font-size: 29px; line-height: 1.12; letter-spacing: -0.01em; margin: 56px 0 14px; text-wrap: balance; }
+p { margin: 0 0 1.05em; text-wrap: pretty; }
+.n { font-family: var(--mono); font-size: .88em; font-variant-numeric: tabular-nums; }
+
+/* exhibits */
+.exhibit { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px 22px 20px; margin: 28px 0 10px; }
+.exhibit h3 { font-family: var(--display); font-size: 15px; font-weight: 700; letter-spacing: .01em; margin: 0 0 4px; }
+.exhibit .sub { font-size: 14.5px; line-height: 1.5; color: var(--muted); margin: 0 0 18px; }
+.cap { font-size: 14.5px; line-height: 1.55; color: var(--muted); margin: 10px 2px 0; }
+
+/* switch */
+.switchrow { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+.switch { display: inline-flex; align-items: center; gap: 12px; background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: inherit; text-align: left; }
+.switch .track { width: 62px; height: 34px; border-radius: 34px; background: var(--base); position: relative; transition: background .25s; flex: none; border: 1px solid var(--line); }
+.switch .knob { position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: transform .25s; }
+.switch[aria-checked="true"] .track { background: var(--hot); }
+.switch[aria-checked="true"] .knob { transform: translateX(28px); }
+.switch .lbl { font-family: var(--display); font-weight: 700; font-size: 17px; line-height: 1.2; }
+.switch .lbl small { display: block; font-family: var(--mono); font-weight: 400; font-size: 12.5px; color: var(--muted); }
+
+/* bars */
+.bars { display: grid; gap: 14px; }
+.brow { display: grid; grid-template-columns: 150px 1fr; gap: 6px 14px; align-items: center; }
+.brow .who { font-family: var(--display); font-weight: 700; font-size: 15px; line-height: 1.2; }
+.brow .who small { display: block; font-weight: 500; color: var(--muted); font-size: 12.5px; }
+.track2 { position: relative; height: 38px; background: color-mix(in srgb, var(--line) 55%, transparent); border-radius: 8px; overflow: hidden; }
+.fill { height: 100%; width: 0; border-radius: 8px; transition: width .6s cubic-bezier(.2,.8,.2,1); display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; color: #fff; font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fill.ppo { background: var(--ppo); }
+.fill.base { background: var(--base); color: #0e1514; }
+.verdict { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.verdict .big { font-family: var(--display); font-weight: 800; font-size: 54px; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.verdict .big.pos { color: var(--ppo); }
+.verdict .big.neg { color: var(--bad); }
+.verdict .txt { font-size: 15px; line-height: 1.45; color: var(--muted); max-width: 30ch; }
+.verdict .txt b { color: var(--ink); font-family: var(--mono); font-weight: 500; }
+
+/* diagram */
+.scroll { overflow-x: auto; }
+.scroll svg { display: block; min-width: 640px; width: 100%; height: auto; }
+svg .box { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5; }
+svg .box.me { stroke: var(--ppo); stroke-width: 2.5; }
+svg .t { fill: var(--ink); font-family: var(--display); font-size: 14px; font-weight: 700; }
+svg .s { fill: var(--muted); font-family: var(--body); font-size: 12.5px; }
+svg .capbg { fill: color-mix(in srgb, var(--line) 70%, transparent); }
+svg .capfull { fill: var(--base); }
+svg .capme { fill: var(--ppo); }
+svg .arrow { stroke: var(--ink); stroke-width: 1.5; fill: none; }
+svg .flow { stroke: var(--hot); stroke-width: 3; fill: none; }
+svg .gone { stroke: var(--base); stroke-width: 2; stroke-dasharray: 5 5; fill: none; }
+svg .mk path { fill: var(--ink); }
+svg .mk.hot path { fill: var(--hot); }
+svg .flowt { fill: var(--ink); font-family: var(--display); font-size: 13.5px; font-weight: 700; }
+.svg-on, .svg-off { display: none; }
+[data-spill="on"] .svg-on { display: inline; }
+[data-spill="off"] .svg-off { display: inline; }
+svg .flow { stroke-dasharray: 10 6; animation: dash 1.2s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -16; } }
+
+/* dose chart */
+.dose { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-items: end; height: 232px; margin-bottom: 6px; }
+.dcol { background: none; border: 0; padding: 0; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; height: 100%; font: inherit; color: inherit; text-align: center; }
+.dcol .val { font-family: var(--mono); font-size: 14px; margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+.dcol .bar { background: var(--ppo); border-radius: 6px 6px 0 0; transition: filter .2s, height .5s; opacity: .55; }
+.dcol.alt .bar { background: repeating-linear-gradient(135deg, var(--ppo) 0 6px, color-mix(in srgb, var(--ppo) 60%, var(--card)) 6px 12px); }
+.dcol[aria-pressed="true"] .bar { opacity: 1; }
+.dcol:hover .bar { opacity: .85; }
+.dlabels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; border-top: 2px solid var(--ink); padding-top: 6px; text-align: center; font-family: var(--mono); font-size: 13.5px; }
+.dnote { margin-top: 14px; font-size: 15.5px; line-height: 1.55; min-height: 4.8em; }
+
+/* tabs / stepper */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.tab { font-family: var(--display); font-weight: 700; font-size: 14.5px; padding: 9px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.panel h4 { font-family: var(--display); font-size: 21px; line-height: 1.2; margin: 0 0 8px; }
+.panel p { font-size: 16.5px; line-height: 1.6; margin-bottom: .8em; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.chip { font-family: var(--mono); font-size: 13px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.chip.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+.chip.good { color: var(--ppo); border-color: color-mix(in srgb, var(--ppo) 45%, var(--line)); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 4px; }
+.stat { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px 12px; }
+.stat .v { font-family: var(--display); font-weight: 800; font-size: 30px; line-height: 1.05; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 14px; line-height: 1.4; color: var(--muted); margin-top: 6px; }
+
+/* lists */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 22px 0; }
+.col { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 18px 6px; }
+.col h3 { font-family: var(--display); font-size: 17px; margin: 0 0 10px; }
+.col ul { margin: 0; padding-left: 1.1em; }
+.col li { font-size: 16px; line-height: 1.5; margin-bottom: .8em; }
+.col.yes { border-top: 4px solid var(--ppo); }
+.col.no { border-top: 4px solid var(--bad); }
+
+footer { margin: 64px auto 60px; border-top: 1px solid var(--line); padding: 18px 20px 0; font-size: 14px; line-height: 1.55; color: var(--muted); }
+.pull { font-family: var(--display); font-weight: 700; font-size: 25px; line-height: 1.25; letter-spacing: -0.01em; border-left: 5px solid var(--hot); padding: 4px 0 4px 18px; margin: 30px 0; text-wrap: balance; }
+
+@media (max-width: 640px) {
+  body { font-size: 17px; }
+  .brow { grid-template-columns: 1fr; }
+  .two { grid-template-columns: 1fr; }
+  .exhibit { padding: 18px 16px 16px; }
+  .verdict .big { font-size: 46px; }
+  .dose { height: 210px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fill, .switch .track, .switch .knob, .dcol .bar { transition: none; }
+  svg .flow { animation: none; }
+}
+</style>
+</head>
+<body>
+<main id="page" data-spill="on">
+
+<header class="top wrap">
+  <p class="kicker">OligoRL · a small RL experiment</p>
+  <h1>My RL agent beat my best bot by <span class="num">56%</span>. Then I turned one rule off.</h1>
+  <p class="dek">It turned out the agent had read my rulebook better than I had.</p>
+  <p class="by">Vaishnavi Yadav · 6 min read</p>
+</header>
+
+<article class="wrap">
+  <p>I built OligoRL, a small simulated market. Five firms sell the same product, set their own prices and wages, and compete for a pool of 30 workers over 30-step games. I wrote eight scripted agents to act as baselines, trained a PPO agent to run one of the firms, and waited to see who won.</p>
+  <p>In the first serious run, PPO won by a lot. On validation games it finished with <span class="n">$106,877</span> in net worth. The best hand-written agent, a pricer I had named Premium pricer, finished with <span class="n">$68,499</span>. That is 56% more. If you have trained RL agents before, you know what a number like that should make you feel. Suspicious.</p>
+  <p>So I ran the least glamorous experiment I could think of. I took the trained agent, changed nothing about it, and switched off one rule in the simulator. You can do the same below.</p>
+</article>
+
+<section class="wide" aria-labelledby="ex1">
+  <div class="exhibit">
+    <h3 id="ex1">Same trained agent, same games, one switch</h3>
+    <p class="sub">Average final net worth on validation games, first rules (v1) pilot.</p>
+    <div class="switchrow">
+      <button class="switch" id="sw-hero" role="switch" aria-checked="true" type="button">
+        <span class="track"><span class="knob"></span></span>
+        <span class="lbl">Demand spillover <small class="state-lbl">ON · 40% of turned-away customers rerouted</small></span>
+      </button>
+    </div>
+    <div class="bars">
+      <div class="brow">
+        <div class="who">PPO agent<small>trained with the rule on</small></div>
+        <div class="track2"><div class="fill ppo" id="bar-ppo"></div></div>
+      </div>
+      <div class="brow">
+        <div class="who">Best hand-written agent<small>Premium pricer</small></div>
+        <div class="track2"><div class="fill base" id="bar-base"></div></div>
+      </div>
+    </div>
+    <div class="verdict" aria-live="polite">
+      <div class="big pos" id="verdict-big">+56%</div>
+      <div class="txt" id="verdict-txt">PPO over the best hand-written agent, <b>+$38,377</b></div>
+    </div>
+  </div>
+  <p class="cap">The trained agent is identical in both states. Both bars move because the hand-written agent was benefiting from the rule too. PPO just benefited far more.</p>
+</section>
+
+<article class="wrap">
+  <h2>What the rule does</h2>
+  <p>The rule is called demand spillover. When a cheap firm sells out, some customers get turned away. Spillover passes a share of them on to firms that still have spare capacity. It seemed realistic to me: if one shop has run out of stock, you try the next one. In my first rules, 40% of turned-away customers were passed on.</p>
+  <p>Here is what I did not see coming. In those rules the rival firms never grew past five workers, and total demand was far above what the whole economy could produce. The rivals were routinely sold out, and a lot of customers were being turned away.</p>
+  <p>PPO worked out where they ended up. It charged about 22% more than its rivals and kept spare workers on the payroll, so it was always the firm with room left. It was not winning customers with a better price or smarter wages. It was collecting leftovers from stores that had run out.</p>
+</article>
+
+<section class="wide" aria-labelledby="ex2">
+  <div class="exhibit">
+    <h3 id="ex2">Where the customers go</h3>
+    <p class="sub">The switch here is the same one as above.</p>
+    <div class="switchrow">
+      <button class="switch" id="sw-diagram" role="switch" aria-checked="true" type="button">
+        <span class="track"><span class="knob"></span></span>
+        <span class="lbl">Demand spillover <small class="state-lbl">ON · 40% of turned-away customers rerouted</small></span>
+      </button>
+    </div>
+    <div class="scroll">
+      <svg viewBox="0 0 720 262" role="img" aria-label="Four rival firms are sold out at five workers each. With spillover on, their turned-away customers flow to the PPO firm, which has spare workers and charges 22% more. With spillover off, those customers leave the market.">
+        <defs>
+          <marker class="mk" id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>
+          <marker class="mk hot" id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker>
+        </defs>
+        <text class="s" x="360" y="16" text-anchor="middle">Demand: far more customers than the whole economy can serve</text>
+        <g class="arrow" style="color:var(--ink)">
+          <line class="arrow" x1="80" y1="26" x2="80" y2="62" marker-end="url(#ah)"/>
+          <line class="arrow" x1="220" y1="26" x2="220" y2="62" marker-end="url(#ah)"/>
+          <line class="arrow" x1="360" y1="26" x2="360" y2="62" marker-end="url(#ah)"/>
+          <line class="arrow" x1="500" y1="26" x2="500" y2="62" marker-end="url(#ah)"/>
+          <line class="arrow" x1="640" y1="26" x2="640" y2="62" marker-end="url(#ah)"/>
+        </g>
+        <!-- rivals -->
+        <g>
+          <rect class="box" x="20" y="66" width="120" height="80" rx="8"/><text class="t" x="80" y="88" text-anchor="middle">Rival A</text>
+          <rect class="capbg" x="36" y="98" width="88" height="10" rx="5"/><rect class="capfull" x="36" y="98" width="88" height="10" rx="5"/>
+          <text class="s" x="80" y="130" text-anchor="middle">5 workers, sold out</text>
+        </g>
+        <g>
+          <rect class="box" x="160" y="66" width="120" height="80" rx="8"/><text class="t" x="220" y="88" text-anchor="middle">Rival B</text>
+          <rect class="capbg" x="176" y="98" width="88" height="10" rx="5"/><rect class="capfull" x="176" y="98" width="88" height="10" rx="5"/>
+          <text class="s" x="220" y="130" text-anchor="middle">5 workers, sold out</text>
+        </g>
+        <g>
+          <rect class="box" x="300" y="66" width="120" height="80" rx="8"/><text class="t" x="360" y="88" text-anchor="middle">Rival C</text>
+          <rect class="capbg" x="316" y="98" width="88" height="10" rx="5"/><rect class="capfull" x="316" y="98" width="88" height="10" rx="5"/>
+          <text class="s" x="360" y="130" text-anchor="middle">5 workers, sold out</text>
+        </g>
+        <g>
+          <rect class="box" x="440" y="66" width="120" height="80" rx="8"/><text class="t" x="500" y="88" text-anchor="middle">Rival D</text>
+          <rect class="capbg" x="456" y="98" width="88" height="10" rx="5"/><rect class="capfull" x="456" y="98" width="88" height="10" rx="5"/>
+          <text class="s" x="500" y="130" text-anchor="middle">5 workers, sold out</text>
+        </g>
+        <!-- PPO -->
+        <g>
+          <rect class="box me" x="580" y="66" width="120" height="80" rx="8"/><text class="t" x="640" y="88" text-anchor="middle">PPO firm</text>
+          <rect class="capbg" x="596" y="98" width="88" height="10" rx="5"/><rect class="capme" x="596" y="98" width="46" height="10" rx="5"/>
+          <text class="s" x="640" y="130" text-anchor="middle">spare workers</text>
+        </g>
+        <text class="s" x="80" y="164" text-anchor="middle">normal price</text>
+        <text class="s" x="220" y="164" text-anchor="middle">normal price</text>
+        <text class="s" x="360" y="164" text-anchor="middle">normal price</text>
+        <text class="s" x="500" y="164" text-anchor="middle">normal price</text>
+        <text class="s" x="640" y="164" text-anchor="middle" style="fill:var(--ink)">about 22% higher price</text>
+
+        <!-- spillover ON: rerouted customers -->
+        <g class="svg-on">
+          <path class="flow" d="M80 174 V212 H640 V176" marker-end="url(#ah2)"/>
+          <path class="flow" d="M220 174 V212"/>
+          <path class="flow" d="M360 174 V212"/>
+          <path class="flow" d="M500 174 V212"/>
+          <text class="flowt" x="360" y="240" text-anchor="middle">Turned-away customers are rerouted to firms with room</text>
+        </g>
+        <!-- spillover OFF: customers leave -->
+        <g class="svg-off">
+          <path class="gone" d="M80 174 V212"/><path class="gone" d="M220 174 V212"/><path class="gone" d="M360 174 V212"/><path class="gone" d="M500 174 V212"/>
+          <text class="s" x="80" y="228" text-anchor="middle">gone</text>
+          <text class="s" x="220" y="228" text-anchor="middle">gone</text>
+          <text class="s" x="360" y="228" text-anchor="middle">gone</text>
+          <text class="s" x="500" y="228" text-anchor="middle">gone</text>
+          <text class="flowt" x="360" y="252" text-anchor="middle">Turned-away customers leave the market, so spare capacity earns nothing</text>
+        </g>
+      </svg>
+    </div>
+    <p class="cap">A sketch of the mechanism, not a data plot. In the pilot, rivals stayed at five workers and PPO's price ran about 22% above theirs.</p>
+  </div>
+</section>
+
+<article class="wrap">
+  <p class="pull">It was not being clever about the market. It was being clever about my rulebook.</p>
+  <h2>How much of the lead was the rule?</h2>
+  <p>To measure it, I retrained PPO with spillover at 0%, 10% and 20% on the first rules. The 40% bar comes from the original pilot, which was a separate run, so read the chart as a shape and not as a precise curve. Tap a bar for the details.</p>
+</article>
+
+<section class="wide" aria-labelledby="ex3">
+  <div class="exhibit">
+    <h3 id="ex3">PPO's lead over the best hand-written agent</h3>
+    <p class="sub">Average net worth difference on validation games, by spillover level.</p>
+    <div class="dose" id="dose" role="group" aria-label="Lead by spillover level"></div>
+    <div class="dlabels" aria-hidden="true"><span>0%</span><span>10%</span><span>20%</span><span>40%</span></div>
+    <p class="dnote" id="dose-note" aria-live="polite"></p>
+  </div>
+</section>
+
+<article class="wrap">
+  <p>More spillover, bigger lead. By this rough comparison, about four-fifths of the original lead came from the rule.</p>
+  <p>But look at the left bar. With spillover at zero, a PPO agent trained from scratch still beat the hand-written agents, by $7.0k, and it won on every validation seed. So my own headline would have been a little too dramatic. The agent that learned with the rule on did fall apart without it, and it ended $17,024 behind. An agent that learned without the rule kept a smaller lead that was real.</p>
+
+  <h2>I fixed it. It found it again.</h2>
+  <p>Click through the three rounds of rule changes below.</p>
+</article>
+
+<section class="wide" aria-labelledby="ex4">
+  <div class="exhibit">
+    <h3 id="ex4">Three rounds of rule changes</h3>
+    <div class="tabs" role="tablist" aria-label="Rounds">
+      <button class="tab" role="tab" id="t0" aria-selected="true" aria-controls="p0" type="button">1 · First rules</button>
+      <button class="tab" role="tab" id="t1" aria-selected="false" aria-controls="p0" type="button">2 · First repair</button>
+      <button class="tab" role="tab" id="t2" aria-selected="false" aria-controls="p0" type="button">3 · Final rules</button>
+    </div>
+    <div class="panel" id="p0" role="tabpanel" aria-labelledby="t0"></div>
+  </div>
+</section>
+
+<article class="wrap">
+  <h2>The agent was a better tester than my test agents</h2>
+  <p>I had written the eight scripted agents on purpose. Some of them were built to attack the rules: one pays the maximum wage, one poaches workers from rivals, one was written specifically to probe spillover. None of them showed the problem clearly. The spillover probe, the Premium pricer, simply looked like a strong baseline. It took a learning agent, and its habit of pushing every lever as far as it will go, to show where that strength came from.</p>
+  <p>None of this is new in spirit. Machine learning people call it reward hacking or specification gaming, and a classic reference is <em>Concrete Problems in AI Safety</em>. What I can offer is a small, concrete, reproducible case, and a habit worth borrowing: treat the learning agent as a tester of your environment, not only as a competitor.</p>
+
+  <h2>A side quest: the hire button</h2>
+  <p>PPO also picked up a habit of requesting a hire on every single step. Against the default rivals that is free, because there is nobody unemployed to hire. Against rivals it had not seen, some overpay and go bankrupt, which pushes their workers into the job pool. PPO hired all of them and then went bankrupt itself in 47% of games.</p>
+  <p>In the final runs it still presses hire during the last three steps in nearly every game. That costs about 0.3%. I reported it and left it alone.</p>
+
+  <h2>Where it ended up</h2>
+  <p>After the fixes I wrote the test plan down before looking at any test game, trained five independent runs, and tested the median run once on 200 unseen games. Nothing was retrained or re-selected after testing.</p>
+</article>
+
+<section class="wide" aria-labelledby="ex5">
+  <div class="exhibit">
+    <h3 id="ex5">Final scorecard</h3>
+    <p class="sub">The same agent against two kinds of opponent.</p>
+    <div class="tabs" role="tablist" aria-label="Opponents">
+      <button class="tab" role="tab" id="s0" aria-selected="true" aria-controls="sp" type="button">Familiar rivals</button>
+      <button class="tab" role="tab" id="s1" aria-selected="false" aria-controls="sp" type="button">Unfamiliar rivals</button>
+    </div>
+    <div id="sp" role="tabpanel" aria-labelledby="s0"></div>
+  </div>
+</section>
+
+<article class="wrap">
+  <h2>What this does and does not show</h2>
+  <div class="two">
+    <div class="col yes">
+      <h3>It does show</h3>
+      <ul>
+        <li>A learning agent is a cheap, tireless tester of a simulator's rules. It found the spillover loophole in one pilot and again after my first fix, while eight hand-written agents had not shown it clearly.</li>
+        <li>A 56% lead can be mostly a property of the rulebook, and one switch is enough to find out.</li>
+        <li>After the fixes a real edge remains on familiar rivals: the median run won by 14%, all five runs beat the benchmark, and it won 92% of paired games with no bankruptcies, under a test plan written down in advance.</li>
+        <li>The setup is reproducible. Games are seeded, and stored games reproduce earlier results exactly.</li>
+      </ul>
+    </div>
+    <div class="col no">
+      <h3>It does not show</h3>
+      <ul>
+        <li>Anything about real markets. This is five firms and 30 workers.</li>
+        <li>That PPO copes with new opponents. Against unfamiliar rivals the median run's edge was not significant, and two of five runs went bankrupt too often.</li>
+        <li>Why the winning strategy works. The audit shows what it does, not why that pays. Turning spillover off also links firms less through demand than in a real market.</li>
+      </ul>
+    </div>
+  </div>
+  <p>The next step I would take is to look for a spillover-style rule that links firms together without opening a loophole, and let PPO probe it again.</p>
+  <p>OligoRL has a browser dashboard where you can play a firm yourself, eight scripted agents, an automatic test suite and the PPO training code. It runs locally. The code is on <a href="https://github.com/vaishnavi0571/OligoRL-env">GitHub</a>.</p>
+</article>
+
+<footer class="wrap">
+  Pilot figures use validation games. Final figures use held-out test games, with the test plan written down before any test game was run.
+</footer>
+
+</main>
+
+<script>
+(function () {
+  var page = document.getElementById('page');
+  var fmt = function (n) { return '$' + n.toLocaleString('en-US'); };
+
+  /* shared spillover state */
+  var VIEW = {
+    on:  { ppo: 106877, base: 68499, big: '+56%', cls: 'pos', txt: 'PPO over the best hand-written agent, <b>+$38,377</b>', lbl: 'ON · 40% of turned-away customers rerouted' },
+    off: { ppo: 43168,  base: 60192, big: '−28%', cls: 'neg', txt: 'PPO under the best hand-written agent, <b>−$17,024</b>', lbl: 'OFF · nobody is rerouted' }
+  };
+  var MAX = 120000;
+  function setSpill(on) {
+    var v = on ? VIEW.on : VIEW.off;
+    page.setAttribute('data-spill', on ? 'on' : 'off');
+    document.querySelectorAll('.switch').forEach(function (b) {
+      b.setAttribute('aria-checked', on ? 'true' : 'false');
+      b.querySelector('.state-lbl').textContent = v.lbl;
+    });
+    var bp = document.getElementById('bar-ppo'), bb = document.getElementById('bar-base');
+    bp.style.width = (v.ppo / MAX * 100) + '%'; bp.textContent = fmt(v.ppo);
+    bb.style.width = (v.base / MAX * 100) + '%'; bb.textContent = fmt(v.base);
+    var big = document.getElementById('verdict-big');
+    big.textContent = v.big; big.className = 'big ' + v.cls;
+    document.getElementById('verdict-txt').innerHTML = v.txt;
+  }
+  document.querySelectorAll('.switch').forEach(function (b) {
+    b.addEventListener('click', function () { setSpill(b.getAttribute('aria-checked') !== 'true'); });
+  });
+  setSpill(true);
+
+  /* dose chart */
+  var DOSE = [
+    { lbl: '0%',  v: 7.0,  txt: 'Retrained with spillover at 0% on the first rules. PPO still beat the best hand-written agent, by about $7.0k, and won on every validation seed.' },
+    { lbl: '10%', v: 9.5,  txt: 'Retrained with spillover at 10%. The lead grew to about $9.5k.' },
+    { lbl: '20%', v: 15.8, txt: 'Retrained with spillover at 20%. The lead grew to about $15.8k.' },
+    { lbl: '40%', v: 38.4, alt: true, txt: 'The original pilot, trained for 1M steps in a separate run: a lead of $38,377 (plus or minus $1,472), against the Premium pricer.' }
+  ];
+  var dose = document.getElementById('dose'), note = document.getElementById('dose-note');
+  function pickDose(i) {
+    dose.querySelectorAll('.dcol').forEach(function (c, j) { c.setAttribute('aria-pressed', j === i ? 'true' : 'false'); });
+    note.textContent = DOSE[i].txt;
+  }
+  DOSE.forEach(function (d, i) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'dcol' + (d.alt ? ' alt' : '');
+    b.setAttribute('aria-pressed', 'false');
+    b.setAttribute('aria-label', 'Spillover ' + d.lbl + ', lead of $' + d.v + 'k');
+    b.innerHTML = '<span class="val">+$' + d.v.toFixed(1) + 'k</span><span class="bar" style="height:' + Math.round(d.v / 38.4 * 168) + 'px"></span>';
+    b.addEventListener('click', function () { pickDose(i); });
+    dose.appendChild(b);
+  });
+  pickDose(0);
+
+  /* rounds */
+  var ROUNDS = [
+    { h: 'Round 1: first rules (v1)',
+      p: ['Rivals stay at five workers. Spillover is 40%. PPO beats the best hand-written agent by 56%.',
+          'Run the same policy with spillover off and it finishes $17,024 behind the Premium pricer.'],
+      chips: [['+56% with the rule', 'good'], ['−$17,024 without it', 'bad']] },
+    { h: 'Round 2: first repair (v2)',
+      p: ['I made the rivals change their headcount with demand, and smoothed the quit rule so a 3% wage gap is no longer a sharp edge. Spillover stayed at 40%.',
+          'PPO found the loophole again. It earned $69.4k against $44.3k for the Rule-based agent, and only $33.5k with spillover off. The cause is structural: demand is about 2.7 times what the economy can produce, and it does not fall when every price goes up.'],
+      chips: [['$69.4k vs $44.3k with the rule', 'good'], ['$33.5k without it', 'bad']] },
+    { h: 'Round 3: final rules',
+      p: ['Spillover went to 0% for good. The old settings are still available as rules v1, and a test with stored games checks that both rule sets reproduce earlier results exactly.',
+          'The price of the fix is that firms are now linked less through demand than they would be in a real market. Everything in the final results below uses these rules.'],
+      chips: [['spillover 0%', 'good'], ['weaker demand coupling', 'bad']] }
+  ];
+  var rtabs = [0, 1, 2].map(function (i) { return document.getElementById('t' + i); });
+  var rpanel = document.getElementById('p0');
+  function pickRound(i) {
+    rtabs.forEach(function (t, j) { t.setAttribute('aria-selected', j === i ? 'true' : 'false'); });
+    var r = ROUNDS[i];
+    rpanel.setAttribute('aria-labelledby', 't' + i);
+    rpanel.innerHTML = '<h4>' + r.h + '</h4>' + r.p.map(function (x) { return '<p>' + x + '</p>'; }).join('') +
+      '<div class="chips">' + r.chips.map(function (c) { return '<span class="chip ' + c[1] + '">' + c[0] + '</span>'; }).join('') + '</div>';
+  }
+  rtabs.forEach(function (t, i) { t.addEventListener('click', function () { pickRound(i); }); });
+  pickRound(0);
+
+  /* scorecard */
+  var SCORE = [
+    [['$38,624', 'median PPO run, against $33,783 for the strongest hand-written agent'],
+     ['+14%', 'a lead of $4,841 (95% interval +$4,363 to +$5,319) on 200 unseen games'],
+     ['92%', 'of paired games won, and no bankruptcies'],
+     ['5 of 5', 'training runs beat the benchmark']],
+    [['$830', 'lead for the median run, which is not statistically significant'],
+     ['2 of 5', 'runs went bankrupt too often, in 12.5% and 10.5% of games'],
+     ['Caution', 'a good score against familiar rivals does not show the agent copes with new ones']]
+  ];
+  var stabs = [document.getElementById('s0'), document.getElementById('s1')];
+  var spanel = document.getElementById('sp');
+  function pickScore(i) {
+    stabs.forEach(function (t, j) { t.setAttribute('aria-selected', j === i ? 'true' : 'false'); });
+    spanel.setAttribute('aria-labelledby', 's' + i);
+    spanel.innerHTML = '<div class="stats">' + SCORE[i].map(function (s) {
+      return '<div class="stat"><div class="v">' + s[0] + '</div><div class="l">' + s[1] + '</div></div>';
+    }).join('') + '</div>';
+  }
+  stabs.forEach(function (t, i) { t.addEventListener('click', function () { pickScore(i); }); });
+  pickScore(0);
+})();
+</script>
+</body>
+</html>
